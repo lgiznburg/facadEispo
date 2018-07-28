@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+	 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+ 	 http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+    <context:component-scan base-package="ru.rsmu.facadeEispo.dao"/>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+        <property name="driverClassName" value="${dataSource.className}"/>
+
+        <property name="url" value="${dataSource.url}"/>
+        <property name="username" value="${dataSource.username}"/>
+        <property name="password" value="${dataSource.password}"/>
+
+    </bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="packagesToScan" value="ru.rsmu.facadeEispo.model"/>
+        <property name="hibernateProperties">
+            <props>
+                <!--<prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop>-->
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.default_schema">${hibernate.default_schema}</prop>
+                <prop key="hibernate.max_fetch_depth">6</prop>
+                <prop key="hibernate.default_batch_fetch_size">16</prop>
+                <prop key="hibernate.connection.CharSet">utf8</prop>
+                <prop key="hibernate.connection.characterEncoding">utf8</prop>
+                <prop key="hibernate.connection.useUnicode">true</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+            </props>
+        </property>
+    </bean>
+
+    <aop:config>
+        <aop:pointcut id="persistentLevel" expression=
+                "	execution(* ru.rsmu.facadeEispo.dao.*Dao.*(..)) "/>
+
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="persistentLevel"/>
+
+    </aop:config>
+
+    <!-- transaction manager -->
+    <bean id="txManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+        <tx:attributes>
+            <tx:method name="make*" read-only="false" propagation="REQUIRES_NEW"/>
+            <tx:method name="save*" read-only="false" propagation="REQUIRES_NEW"/>
+            <tx:method name="delete*" read-only="false" propagation="REQUIRES_NEW"/>
+            <tx:method name="update*" read-only="false" propagation="REQUIRES_NEW"/>
+            <tx:method name="sync*" read-only="false" propagation="REQUIRES_NEW"/>
+
+            <tx:method name="queue" read-only="false" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+            <tx:method name="sendEmails" read-only="true" propagation="SUPPORTS" />
+            <tx:method name="sendEmail" read-only="false" propagation="REQUIRES_NEW" rollback-for="java.lang.Exception" />
+
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="count*" read-only="true"/>
+            <tx:method name="check*" read-only="true"/>
+            <tx:method name="build*" read-only="true"/>
+            <tx:method name="convert*" read-only="false" propagation="REQUIRES_NEW" />
+        </tx:attributes>
+    </tx:advice>
+
+
+
+</beans>
