@@ -1,6 +1,7 @@
 package ru.rsmu.facadeEispo.dao;
 
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Repository;
 import ru.rsmu.facadeEispo.model.Entrant;
@@ -46,6 +47,7 @@ public class EntrantDao extends CommonDao {
                 .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
                 .createAlias( "requests", "request" )
                 .add( Restrictions.eq( "request.status", RequestStatus.REJECTED ) )
+                .addOrder( Order.asc( "lastName" ) )
                 .setResultTransformer( Criteria.DISTINCT_ROOT_ENTITY );
 
         return criteria.list();

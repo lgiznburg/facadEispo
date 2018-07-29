@@ -11,6 +11,7 @@
     <a class="nav-link <c:if test="${fn:contains(uri, '/storedProperties.htm')}">active</c:if>" href="<c:url value="/storedProperties.htm"/>">Настройки</a>
   <a class="nav-link <c:if test="${fn:contains(uri, '/loadFromTandem.htm')}">active</c:if>" href="<c:url value="/loadFormTandem.htm"/>">Загрузить из Тандема</a>
   <a class="nav-link" href="<c:url value="/createApplicationRequest.htm"/>" target="_blank">Создать файл заявлений</a>
+  <a class="nav-link" href="<c:url value="/createWithdrawalRequest.htm"/>" target="_blank">Создать файл отзыв заявлений</a>
   <a class="nav-link <c:if test="${fn:contains(uri, '/loadApplicationResponse.htm')}">active</c:if>" href="<c:url value="/loadApplicationResponse.htm"/>">Загрузить ответ на заявления</a>
   <%--</sec:authorize>--%>
 <%--

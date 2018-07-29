@@ -6,5 +6,6 @@ package ru.rsmu.facadeEispo.model;
 public enum EntrantStatus {
     NEW,
     UPDATED,
-    SUBMITTED
+    SUBMITTED,
+    FOREIGNER
 }

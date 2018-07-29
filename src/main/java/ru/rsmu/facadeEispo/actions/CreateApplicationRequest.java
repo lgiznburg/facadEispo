@@ -25,7 +25,6 @@ import java.util.List;
  * @author leonid.
  */
 @Controller
-@RequestMapping(value = "/createApplicationRequest.htm")
 public class CreateApplicationRequest  {
 
     protected static final DateFormat DATE_FORMAT = new SimpleDateFormat( "dd.MM.yyyy" );
@@ -39,7 +38,7 @@ public class CreateApplicationRequest  {
     @Autowired
     private StoredPropertyService propertyService;
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(value = "/createApplicationRequest.htm", method = RequestMethod.GET)
     public ResponseEntity<String> createCsvRequest() {
         StringBuilder result = new StringBuilder();
         //header
@@ -50,14 +49,28 @@ public class CreateApplicationRequest  {
             if ( !request.getEntrant().isValid() ) {
                 continue;
             }
-            result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() )).append( ";" )
-                    .append( request.getEntrant().getLastName() ).append( ";" )
-                    .append( request.getEntrant().getFirstName() ).append( ";" )
-                    .append( request.getEntrant().getMiddleName() ).append( ";" )
-                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" )
-                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_CAMPAIGN_ID ) ).append( ";" )
-                    .append( DATE_FORMAT.format( request.getEntrant().getBirthDate() ) ).append( ";" )
-                    .append( request.getEntrant().getCitizenship() ).append( ";" )
+            result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() ) ).append( ";" );
+
+            if ( request.getEntrant().getDeception() != null ) {
+                result.append( request.getEntrant().getDeception().getLastName() ).append( ";" )
+                        .append( request.getEntrant().getDeception().getFirstName() ).append( ";" )
+                        .append( request.getEntrant().getDeception().getMiddleName() ).append( ";" );
+            } else {
+                result.append( request.getEntrant().getLastName() ).append( ";" )
+                        .append( request.getEntrant().getFirstName() ).append( ";" )
+                        .append( request.getEntrant().getMiddleName() ).append( ";" );
+            }
+
+            result.append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_CAMPAIGN_ID ) ).append( ";" );
+
+            if ( request.getEntrant().getDeception() != null ) {
+                result.append( DATE_FORMAT.format( request.getEntrant().getDeception().getBirthDate() ) ).append( ";" );
+            } else {
+                result.append( DATE_FORMAT.format( request.getEntrant().getBirthDate() ) ).append( ";" );
+            }
+
+            result.append( request.getEntrant().getCitizenship() ).append( ";" )
                     .append( request.getSpeciality() ).append( ";" )
                     .append( request.getFinancing() ).append( ";" )
                     .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" )
@@ -74,4 +87,41 @@ public class CreateApplicationRequest  {
         return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
 
     }
+
+    @RequestMapping(value = "/createWithdrawalRequest.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createWithdrwalCsvRequest() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;compaignId;dateOfBirth;specialty;financingType;targetReception;applicationDate;initiative\n" );
+
+        List<Request> requests = requestDao.findWithdrawalRequests();
+        for( Request request : requests ) {
+            if ( !request.getEntrant().isValid() ) {
+                continue;
+            }
+            result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() ) ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_CAMPAIGN_ID ) ).append( ";" );
+
+            if ( request.getEntrant().getDeception() != null ) {
+                result.append( DATE_FORMAT.format( request.getEntrant().getDeception().getBirthDate() ) ).append( ";" );
+            } else {
+                result.append( DATE_FORMAT.format( request.getEntrant().getBirthDate() ) ).append( ";" );
+            }
+
+            result.append( request.getSpeciality() ).append( ";" )
+                    .append( request.getFinancing() ).append( ";" )
+                    .append( request.getTargetRequest() ).append( ";" )
+                    .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" )
+                    .append( "1" ).append( "\n" );
+
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"entrant_withdrawal_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
 }

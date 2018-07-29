@@ -53,7 +53,11 @@ public class LoadApplicationResponseService {
                 if ( request.equalsByName( r1 ) ) {
                     EispoResponse response = request.getResponse()==null ? new EispoResponse() : request.getResponse();
                     response.setRequest( request );
-                    response.setResponse( cells.length >= 9 ? cells[8] : "" );
+                    String comment = cells.length >= 9 ? cells[8] : "";
+                    if ( comment.length() > 251 ) {
+                        comment = comment.substring( 0, 250 );
+                    }
+                    response.setResponse( comment );
 
                     if ( cells[7].startsWith( "не" ) ) {
                         request.setStatus( RequestStatus.REJECTED );

@@ -27,4 +27,12 @@ public class RequestDao extends CommonDao {
 
         return criteria.list();
     }
+
+    public List<Request> findWithdrawalRequests() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Request.class )
+                .createAlias( "entrant", "entrant" )
+                .add(  Restrictions.eq( "status", RequestStatus.RETIRED ) );
+
+        return criteria.list();
+    }
 }

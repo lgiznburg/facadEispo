@@ -5,7 +5,9 @@ package ru.rsmu.facadeEispo.model;
  */
 public enum StoredPropertyName {
     SYSTEM_OID("System", "Our OID", "1.2.643.5.1.13.13.12.4.77.4", StoredPropertyType.STRING),
-    SYSTEM_CAMPAIGN_ID("System", "Campaign ID", "1", StoredPropertyType.INTEGER)
+    SYSTEM_CAMPAIGN_ID("System", "Campaign ID", "1", StoredPropertyType.INTEGER),
+    EMAIL_FROM_ADDRESS("Email","Обратный адрес для email", "prk@rsmu.ru", StoredPropertyType.STRING),
+    EMAIL_FROM_SIGNATURE("Email","Название обратного адреса для email", "Приемная комиссия РНИМУ им.Пирогова", StoredPropertyType.STRING),
     ;
 
     private String groupName;
