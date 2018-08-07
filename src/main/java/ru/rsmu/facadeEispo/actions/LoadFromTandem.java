@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import ru.rsmu.facadeEispo.service.LoadFromTandemService;
@@ -37,14 +38,16 @@ public class LoadFromTandem  extends BaseController {
     }
 
     @RequestMapping( method = RequestMethod.POST )
-    public String onSubmitPage( HttpServletRequest request, ModelMap model ) {
+    public String onSubmitPage( HttpServletRequest request, ModelMap model,
+                                @RequestParam(value = "loadTestDate", required = false) Integer loadTestDate ) {
         try {
             if ( request instanceof MultipartHttpServletRequest ) {
                 MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
                 if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
                     MultipartFile file = multipart.getFile( "studentsFile" );
                     if ( file.getOriginalFilename().matches( ".*\\.xls" ) ) {
-                        /*List<String> messages =*/ loadFromTandemService.readFromFile( file.getInputStream());
+                        boolean loginOnly = loadTestDate != null && loadTestDate > 0;
+                        /*List<String> messages =*/ loadFromTandemService.readFromFile( file.getInputStream(), loginOnly );
                         //model.put( "messages", messages );
                     }
                 }

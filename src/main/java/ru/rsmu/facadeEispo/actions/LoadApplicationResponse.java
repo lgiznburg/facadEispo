@@ -35,7 +35,7 @@ public class LoadApplicationResponse extends BaseController {
         return buildModel( model );
     }
 
-    @RequestMapping( method = RequestMethod.POST )
+    @RequestMapping( method = RequestMethod.POST, params = "response")
     public String onSubmitPage( HttpServletRequest request, ModelMap model ) {
         try {
             if ( request instanceof MultipartHttpServletRequest ) {
@@ -54,5 +54,23 @@ public class LoadApplicationResponse extends BaseController {
         return "redirect:/home.htm?variant=error";
     }
 
+    @RequestMapping( method = RequestMethod.POST, params = "scores")
+    public String onUpdateScores( HttpServletRequest request, ModelMap model ) {
+        try {
+            if ( request instanceof MultipartHttpServletRequest ) {
+                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
+                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
+                    MultipartFile file = multipart.getFile( "studentsFile" );
+                    if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
+                        /*List<String> messages =*/ responseService.loadScores( file.getInputStream() );
+                        //model.put( "messages", messages );
+                    }
+                }
+            }
+        } catch ( IOException e ) {
+            logger.error( "Can't upload application response CSV file", e );
+        }
+        return "redirect:/home.htm?variant=scores";
+    }
 
 }

@@ -7,5 +7,6 @@ public enum EntrantStatus {
     NEW,
     UPDATED,
     SUBMITTED,
-    FOREIGNER
+    FOREIGNER,
+    RETIRED
 }

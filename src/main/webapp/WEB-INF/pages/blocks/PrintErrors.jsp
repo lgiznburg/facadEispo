@@ -16,7 +16,7 @@
     <th>Дело #</th>
     <th>Имя</th>
     <th>Тел</th>
-    <th>Email</th>
+    <th>Данные РНИМУ</th>
     <th>Описание</th>
   </tr>
   </thead>
@@ -26,8 +26,8 @@
     <tr>
       <td>${entrant.caseNumber}</td>
       <td>${entrant.lastName}<br/> ${entrant.firstName}<br/> ${entrant.middleName}</td>
-      <td>${entrant.phone}</td>
-      <td>${entrant.email}</td>
+      <td>${entrant.phone}<br>${entrant.email}</td>
+      <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
       <td>${entrant.requests[0].response.response}</td>
     </tr>
   </c:forEach>

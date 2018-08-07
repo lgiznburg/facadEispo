@@ -4,7 +4,7 @@ package ru.rsmu.facadeEispo.service;
  * @author leonid.
  */
 public enum EmailType {
-    ERROR_NOTIFICATION( "/emails/ErrorNotification.vm","Информация о проблеме");
+    ERROR_NOTIFICATION( "/emails/ErrorNotification.vm","Информация о проблеме с заявлением в ординатуру");
 
     private String fileName;
     private String subject;

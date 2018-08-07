@@ -8,7 +8,7 @@
 
     <h2>Изменить свойство</h2>
 
-<form:form commandName="storedProperty" action="StoredPropertyEdit.htm" method="post" name="storedProperty">
+<form:form commandName="storedProperty" action="storedPropertyEdit.htm" method="post" name="storedProperty">
   <form:hidden path="propertyName"/>
   <div class="form-group row">
     <div class="col-sm-2">${storedProperty.propertyName.groupName}</div>

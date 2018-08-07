@@ -36,7 +36,7 @@ public class LoadFromTandemService implements ExcelLayout {
     @Autowired
     private EntrantDao entrantDao;
 
-    public void readFromFile( InputStream file ) throws IOException {
+    public void readFromFile( InputStream file, boolean loginOnly ) throws IOException {
 
 
         //List<String> resultLog = new ArrayList<>();
@@ -46,15 +46,25 @@ public class LoadFromTandemService implements ExcelLayout {
         POIFSFileSystem fs = new POIFSFileSystem( file );
         HSSFWorkbook wb = new HSSFWorkbook( fs );
 
-        HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
+        if ( !loginOnly ) {
+            HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
 
-        loadCommonInfo( sheet, entrants );
+            loadCommonInfo( sheet, entrants );
 
-        sheet = wb.getSheetAt( 1 );  // requests page
-        loadRequests( sheet, entrants );
+            sheet = wb.getSheetAt( 1 );  // requests page
+            loadRequests( sheet, entrants );
 
-        sheet = wb.getSheetAt( 3 );   // score request  page
-        loadScoreRequests( sheet, entrants );
+            sheet = wb.getSheetAt( 3 );   // score request  page
+            loadScoreRequests( sheet, entrants );
+
+            sheet = wb.getSheetAt( 2 );   // login request  page
+            loadLoginRequests( sheet, entrants );
+
+        } else {
+
+            HSSFSheet sheet = wb.getSheetAt( 2 );  // login request page
+            loadLoginRequests( sheet, entrants, true );
+        }
 
         saveAllEntities( entrants );
     }
@@ -113,13 +123,19 @@ public class LoadFromTandemService implements ExcelLayout {
             }
             Entrant entrant = findByName( entrants, firstName, middleName, lastName, birthDate );
             if ( entrant != null ) {
+                Long snils = parseSnils( getCellValue( row, SNILS ) );;
                 if ( entrant.getSnilsNumber() == null ) {
-                    Long snils = parseSnils( getCellValue( row, SNILS ) );
-
                     // not yet initialized
                     entrant.setSnilsNumber( snils );
                     entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
 
+                } else {
+                    if ( !snils.equals( entrant.getSnilsNumber() ) ) {
+                        entrant.setSnilsNumber( snils );
+                        if ( entrant.getStatus() == EntrantStatus.SUBMITTED) {
+                            entrant.setStatus( EntrantStatus.UPDATED );
+                        }
+                    }
                 }
                 entrant.setBirthDate( birthDate );
 
@@ -286,6 +302,44 @@ public class LoadFromTandemService implements ExcelLayout {
             logger.error( "Wrong snils" );
         }
         return snils;
+    }
+
+    private void loadLoginRequests( HSSFSheet sheet, List<Entrant> entrants ) {
+        loadLoginRequests( sheet, entrants, false );
+    }
+
+    private void loadLoginRequests( HSSFSheet sheet, List<Entrant> entrants, boolean loadFormDB ) {
+        int rowN = 1;  // skip header
+
+        do {
+            HSSFRow row = sheet.getRow( rowN );
+            // check if row is valid
+            if ( row == null || row.getCell( (short) 0 ) == null ) {
+                break;
+            }
+
+            Long snils = parseSnils( getCellValue( row, L_SNILS ) );
+            Entrant entrant = findBySnils( entrants, snils );
+            if ( loadFormDB ) {
+                entrant = entrantDao.findEntrantBySnilsNumber( snils );
+            }
+            if ( entrant != null && entrant.getExamInfo() != null ) {
+                if ( loadFormDB ) {
+                    entrants.add( entrant );
+                }
+                Date scheduledDate;
+                try {
+                    scheduledDate = DATE_FORMAT.parse( getCellValue( row, L_SCHEDULED ) );
+                } catch (ParseException e) {
+                    scheduledDate = null;
+                }
+                entrant.getExamInfo().setScheduledDate( scheduledDate );
+            } else {
+                logger.error( "Can't find entrant by snils" );
+            }
+
+            rowN++;
+        } while ( true );
     }
 
 }

@@ -29,4 +29,7 @@ public interface ExcelLayout {
     public static final short SC_SNILS = 0;
     public static final short SC_SPECIALITY = 6;
 
+    public static final short L_SNILS = 0;
+    public static final short L_SCHEDULED = 4;
+
 }

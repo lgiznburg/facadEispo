@@ -8,6 +8,7 @@ public enum StoredPropertyName {
     SYSTEM_CAMPAIGN_ID("System", "Campaign ID", "1", StoredPropertyType.INTEGER),
     EMAIL_FROM_ADDRESS("Email","Обратный адрес для email", "prk@rsmu.ru", StoredPropertyType.STRING),
     EMAIL_FROM_SIGNATURE("Email","Название обратного адреса для email", "Приемная комиссия РНИМУ им.Пирогова", StoredPropertyType.STRING),
+    REPORT_EXTENDED_ERROR_CSV("Report", "Extended errors CSV", "1", StoredPropertyType.INTEGER),
     ;
 
     private String groupName;

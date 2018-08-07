@@ -77,4 +77,53 @@ public class LoadApplicationResponseService {
             entrantDao.saveEntity( entrant );
         }
     }
+
+    public void loadScores( InputStream inputStream ) throws IOException {
+        //snils;oid;testResultType;testResultOrganization;testResultYear;specialty;result;status;errorInfo
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+
+        boolean skipHeader = true;
+        Entrant entrant = null;
+        //Read File Line By Line
+        for (String strLine;(strLine = br.readLine()) != null;) {
+            if ( skipHeader ) {
+                skipHeader = false;
+                continue;
+            }
+            String[] cells = strLine.split( ";" );
+            if ( cells.length < 8 ) {
+                continue;
+            }
+            Long snils = ServiceUtils.parseSnils( cells[0] );
+            if ( snils == null ) {
+                continue;
+            }
+            if ( entrant == null || !snils.equals( entrant.getSnilsNumber() ) ) {
+                entrant = entrantDao.findEntrantBySnilsNumber( snils );
+            }
+            if ( entrant == null ) {
+                continue;
+            }
+
+            String comment = cells.length >= 9 ? cells[8] : "";
+            if ( comment.length() > 251 ) {
+                comment = comment.substring( 0, 250 );
+            }
+            Integer score = 0;
+            try {
+                score = Integer.parseInt( cells[6] );
+            } catch (NumberFormatException e) {
+                score = null;
+            }
+
+            if ( cells[7].startsWith( "не" ) ) {
+                entrant.getExamInfo().setScore( null );
+            } else {
+                entrant.getExamInfo().setScore( score );
+            }
+            entrant.getExamInfo().setResponse( comment );
+
+            entrantDao.saveEntity( entrant.getExamInfo() );
+        }
+    }
 }

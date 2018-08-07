@@ -13,6 +13,7 @@ import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.model.Entrant;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -26,6 +27,13 @@ public class Home extends BaseController{
     @Autowired
     private EntrantDao entrantDao;
 
+    private static final Comparator<Entrant> comparator = new Comparator<Entrant>() {
+        @Override
+        public int compare( Entrant o1, Entrant o2 ) {
+            return o1.getLastName().compareTo( o2.getLastName() );
+        }
+    };
+
     public Home() {
         setTitle( "List of loaded entrants" );
         setContent( "/WEB-INF/pages/blocks/Home.jsp" );
@@ -33,12 +41,25 @@ public class Home extends BaseController{
 
     @ModelAttribute("entrants")
     public List<Entrant> getEntrants( @RequestParam(value = "variant", required = false) String variant) {
+        List<Entrant> entrants = null;
         if ( variant == null ) {
-            return entrantDao.findNewEntrants();
+            entrants = entrantDao.findNewEntrants();
         } else if ( variant.equalsIgnoreCase( "error" ) ) {
-            return entrantDao.findEntrantsWithError();
+            entrants = entrantDao.findEntrantsWithError();
+        } else if ( variant.equalsIgnoreCase( "search" ) ) {
+            entrants = Collections.emptyList();
         }
-        return entrantDao.findNewEntrants();
+        if ( entrants == null ) {
+            entrants = entrantDao.findNewEntrants();
+        }
+        Collections.sort( entrants, comparator );
+
+        return entrants;
+    }
+
+    @ModelAttribute("searchForm")
+    public SearchForm getSearchForm() {
+        return new SearchForm();
     }
 
     @ModelAttribute("showType")
@@ -47,12 +68,26 @@ public class Home extends BaseController{
             if( variant.equalsIgnoreCase( "error" ) ) {
                 return "error";
             }
+            if( variant.equalsIgnoreCase( "search" ) ) {
+                return "search";
+            }
         }
         return "new";
     }
 
     @RequestMapping( method = {RequestMethod.GET, RequestMethod.HEAD})
     public String showPage( ModelMap modelMap ) {
+        return buildModel( modelMap );
+    }
+
+    @RequestMapping( method = RequestMethod.POST )
+    public String doSearch( ModelMap modelMap,
+                            @ModelAttribute("searchForm") SearchForm searchForm ) {
+        if ( !searchForm.isEmpty() ) {
+            List<Entrant> entrants = entrantDao.findBySearch( searchForm );
+            Collections.sort( entrants, comparator );
+            modelMap.addAttribute( "entrants", entrants );
+        }
         return buildModel( modelMap );
     }
 }

@@ -7,5 +7,6 @@ public enum RequestStatus {
     NEW,
     CONFIRMED,
     REJECTED,
-    RETIRED
+    RETIRED,
+    TERMINATED
 }

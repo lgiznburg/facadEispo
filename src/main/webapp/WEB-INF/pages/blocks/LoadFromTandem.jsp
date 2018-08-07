@@ -26,6 +26,14 @@
     </div>
     <div  class="form-group row">
       <div class="col-5">
+        <label>
+          <span>Load date of test only:</span>
+          <input type="checkbox" name="loadTestDate" class="form-control" value="1"/>
+        </label>
+      </div>
+    </div>
+    <div  class="form-group row">
+      <div class="col-5">
         <input type="submit" value="Submit" class="btn btn-primary"/>
       </div>
     </div>

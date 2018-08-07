@@ -10,9 +10,14 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.model.Entrant;
+import ru.rsmu.facadeEispo.model.StoredPropertyName;
+import ru.rsmu.facadeEispo.service.ServiceUtils;
+import ru.rsmu.facadeEispo.service.StoredPropertyService;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -26,9 +31,20 @@ public class PrintReport {
     @Autowired
     private EntrantDao entrantDao;
 
+    @Autowired
+    private StoredPropertyService propertyService;
+
     @RequestMapping(value = "/printErrors.htm")
     public String showPrintError( ModelMap modelMap ) {
         List<Entrant> entrants = entrantDao.findEntrantsWithError();
+
+        Collections.sort( entrants, new Comparator<Entrant>() {
+            @Override
+            public int compare( Entrant o1, Entrant o2 ) {
+                return o1.getLastName().compareTo( o2.getLastName() );
+            }
+        } );
+
         modelMap.addAttribute( "entrants", entrants );
         return "/blocks/PrintErrors";
     }
@@ -37,18 +53,38 @@ public class PrintReport {
     public ResponseEntity<String> createCsvRequest() {
         StringBuilder result = new StringBuilder();
         //header
-        result.append( "Номер дела;ФИО;Данные в РНИМУ;Описание ошибки ЕИСПО\n" );
+        boolean extended = propertyService.getPropertyAsInt( StoredPropertyName.REPORT_EXTENDED_ERROR_CSV ) > 0;
+        result.append( "Номер дела;" );
+        if ( extended ) { result.append( "СНИЛС;" ); }
+        result.append( "ФИО;" );
+        if ( extended ) { result.append( "Дата рожд.;" ); }
+        result.append( "Данные в РНИМУ;Описание ошибки ЕИСПО\n" );
 
         List<Entrant> entrants = entrantDao.findEntrantsWithError();
+
+        Collections.sort( entrants, new Comparator<Entrant>() {
+            @Override
+            public int compare( Entrant o1, Entrant o2 ) {
+                return o1.getLastName().compareTo( o2.getLastName() );
+            }
+        } );
+
         for( Entrant entrant : entrants ) {
-            result.append( entrant.getCaseNumber() ).append( ";" )
-            .append( entrant.getLastName() ).append( " " )
-            .append( entrant.getFirstName() ).append( " " )
-            .append( entrant.getMiddleName() ).append( ";" )
-            .append( "Тип " ).append( entrant.getExamInfo().getType() )
-            .append( " Организация " ).append( entrant.getExamInfo().getOrganization() )
-            .append( " Год " ).append( entrant.getExamInfo().getYear() ).append( ";" )
-            .append( "\"" ).append( entrant.getRequests().get( 0 ).getResponse().getResponse() ).append( "\"\n" );
+            String response = entrant.getRequests().get( 0 ).getResponse().getResponse();
+            if ( response.lastIndexOf( " В заявлении" ) > 0 ) {
+                response = response.substring( 0, response.lastIndexOf( " В заявлении" ) );
+                response += " Есть еще одно заявление в другую организацию с такими же данными";
+            }
+            result.append( entrant.getCaseNumber() ).append( ";" );
+            if ( extended ) { result.append( entrant.getSnilsNumber() ).append( ";" ); }
+            result.append( entrant.getLastName() ).append( " " )
+                    .append( entrant.getFirstName() ).append( " " )
+                    .append( entrant.getMiddleName() ).append( ";" );
+            if ( extended ) { result.append( ServiceUtils.DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" ); }
+            result.append( "Тип " ).append( entrant.getExamInfo().getType() )
+                    .append( " Организация " ).append( entrant.getExamInfo().getOrganization() )
+                    .append( " Год " ).append( entrant.getExamInfo().getYear() ).append( ";" )
+                    .append( "\"" ).append( response ).append( "\"\n" );
 
 
         }
@@ -59,5 +95,40 @@ public class PrintReport {
         return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
 
     }
+
+    @RequestMapping(value = "/createCsvScores.htm")
+    public ResponseEntity<String> createCsvScores() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "Номер дела;ФИО;Тип;Организация;Год;Балл\n" );
+
+        List<Entrant> entrants = entrantDao.findEntrantsWithScore();
+
+        Collections.sort( entrants, new Comparator<Entrant>() {
+            @Override
+            public int compare( Entrant o1, Entrant o2 ) {
+                return o1.getLastName().compareTo( o2.getLastName() );
+            }
+        } );
+
+        for( Entrant entrant : entrants ) {
+            result.append( entrant.getCaseNumber() ).append( ";" );
+            result.append( entrant.getLastName() ).append( " " )
+                    .append( entrant.getFirstName() ).append( " " )
+                    .append( entrant.getMiddleName() ).append( ";" );
+            result.append( entrant.getExamInfo().getType() ).append( ";" )
+                    .append( entrant.getExamInfo().getOrganization() ).append( ";" )
+                    .append( entrant.getExamInfo().getYear() ).append( ";" )
+                    .append( entrant.getExamInfo().getScore() ).append( "\n" );
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"entrant_scores_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+
 
 }

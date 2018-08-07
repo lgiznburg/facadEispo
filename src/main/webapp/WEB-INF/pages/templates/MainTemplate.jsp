@@ -44,6 +44,13 @@
         </div>
       </div>
     </div>
+
+    <%--<div class="row">
+      <c:import url="/WEB-INF/pages/static/AdminMenu.jsp"/>
+    </div>
+    <div class="row">
+      <c:import url="${content}"/>
+    </div>--%>
   <%--</sec:authorize>--%>
 
 <%--

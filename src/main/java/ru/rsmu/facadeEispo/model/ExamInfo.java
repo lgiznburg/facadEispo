@@ -4,6 +4,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author leonid.
@@ -38,6 +39,10 @@ public class ExamInfo implements Serializable {
 
     @Column
     private String response;
+
+    @Column(name = "scheduled_date")
+    @Temporal( TemporalType.DATE )
+    private Date scheduledDate;
 
     public ExamInfo() {
     }
@@ -108,6 +113,14 @@ public class ExamInfo implements Serializable {
 
     public void setResponse( String response ) {
         this.response = response;
+    }
+
+    public Date getScheduledDate() {
+        return scheduledDate;
+    }
+
+    public void setScheduledDate( Date scheduledDate ) {
+        this.scheduledDate = scheduledDate;
     }
 
     public boolean equalsByName( ExamInfo another ) {

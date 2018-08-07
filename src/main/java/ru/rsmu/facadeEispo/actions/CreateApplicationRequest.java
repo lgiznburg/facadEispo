@@ -8,16 +8,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.dao.RequestDao;
+import ru.rsmu.facadeEispo.model.Entrant;
 import ru.rsmu.facadeEispo.model.Request;
+import ru.rsmu.facadeEispo.model.RequestStatus;
 import ru.rsmu.facadeEispo.model.StoredPropertyName;
 import ru.rsmu.facadeEispo.service.StoredPropertyService;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -47,6 +48,9 @@ public class CreateApplicationRequest  {
         List<Request> requests = requestDao.findRequestsForExport();
         for( Request request : requests ) {
             if ( !request.getEntrant().isValid() ) {
+                continue;
+            }
+            if ( request.getStatus() == RequestStatus.RETIRED || request.getStatus() == RequestStatus.TERMINATED ) {
                 continue;
             }
             result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() ) ).append( ";" );
@@ -123,5 +127,62 @@ public class CreateApplicationRequest  {
         return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
 
     }
+
+    @RequestMapping(value = "/createScoresRequest.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createScoresCsvRequest(@RequestParam(value = "type",required = false) String type) {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;dateOfBirth;testResultType;testResultYear;testResultOrganization;specialty\n" );
+
+        List<Entrant> entrants = entrantDao.findEntrantsForScores();
+        for( Entrant entrant : entrants ) {
+            if ( !entrant.isValid() ) {
+                continue;
+            }
+            if ( "ординатура".equalsIgnoreCase( entrant.getExamInfo().getType() ) ) {
+                // ординатура
+                if ( type == null || !type.equals( "test" ) ) {
+                    continue; //запрошена аккредитация
+                }
+            }
+            else {  // аккредитация
+                if ( type != null && type.equals( "test" ) ) {
+                    continue; //запрошено тестирование
+                }
+            }
+            boolean rejected = false;
+            for ( Request request : entrant.getRequests() ) {
+                if ( request.getStatus() != RequestStatus.CONFIRMED ) {
+                    rejected = true;
+                    break;
+                }
+            }
+            if ( rejected ) continue;
+
+
+            result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" );
+
+            /*if ( entrant.getEntrant().getDeception() != null ) {
+                result.append( DATE_FORMAT.format( entrant.getEntrant().getDeception().getBirthDate() ) ).append( ";" );
+            } else {*/
+                result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+            //}
+
+            result.append( entrant.getExamInfo().getType() ).append( ";" )
+                    .append( entrant.getExamInfo().getYear() ).append( ";" )
+                    .append( entrant.getExamInfo().getOrganization() ).append( ";" )
+                    .append( entrant.getExamInfo().getSpeciality() ).append( "\n" );
+
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"entrant_scores_request_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+
 
 }
