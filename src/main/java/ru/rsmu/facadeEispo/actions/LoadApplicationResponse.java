@@ -73,4 +73,24 @@ public class LoadApplicationResponse extends BaseController {
         return "redirect:/home.htm?variant=scores";
     }
 
+    @RequestMapping( method = RequestMethod.POST, params = "withdrawal")
+    public String onUpdateWithdrawal( HttpServletRequest request, ModelMap model ) {
+        try {
+            if ( request instanceof MultipartHttpServletRequest ) {
+                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
+                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
+                    MultipartFile file = multipart.getFile( "studentsFile" );
+                    if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
+                        /*List<String> messages =*/ responseService.loadWithdrawal( file.getInputStream() );
+                        //model.put( "messages", messages );
+                    }
+                }
+            }
+        } catch ( IOException e ) {
+            logger.error( "Can't upload application response CSV file", e );
+        }
+        return "redirect:/home.htm";
+    }
+
+
 }

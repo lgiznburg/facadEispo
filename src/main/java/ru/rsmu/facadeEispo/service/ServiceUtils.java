@@ -15,6 +15,7 @@ public class ServiceUtils {
     protected static Logger logger = LoggerFactory.getLogger( ServiceUtils.class );
 
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat( "dd.MM.yyyy" );
+    public static final DateFormat YEAR_FORMAT = new SimpleDateFormat( "yyyy" );
 
     public static Long parseSnils( String value ) {
         Long snils = null;

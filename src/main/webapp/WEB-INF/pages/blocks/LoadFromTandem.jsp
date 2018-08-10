@@ -20,7 +20,7 @@
       <div class="col-5">
         <label>
           <span>Select a file:</span>
-          <input type="file" name="studentsFile" class="form-control"/>
+          <input type="file" name="studentsFile" class="form-control-file"/>
         </label>
       </div>
     </div>
@@ -28,7 +28,7 @@
       <div class="col-5">
         <label>
           <span>Load date of test only:</span>
-          <input type="checkbox" name="loadTestDate" class="form-control" value="1"/>
+          <input type="checkbox" name="loadTestDate" class="form-check-input" value="1"/>
         </label>
       </div>
     </div>

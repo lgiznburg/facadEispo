@@ -8,5 +8,6 @@ public enum EntrantStatus {
     UPDATED,
     SUBMITTED,
     FOREIGNER,
-    RETIRED
+    RETIRED,
+    ENFORCED
 }

@@ -57,7 +57,10 @@ public class EntrantDao extends CommonDao {
 
     public List<Entrant> findEntrantsForScores() {
         Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
-                .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                .add( Restrictions.disjunction()
+                        .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                        .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
+                )
                 .createAlias( "examInfo", "examInfo" )
                 .add( Restrictions.eq( "examInfo.score", 0 ) );
 
@@ -85,6 +88,19 @@ public class EntrantDao extends CommonDao {
             criteria.add( Restrictions.eq( "snilsNumber", searchForm.getSnils() ) );
         }
 
+        return criteria.list();
+    }
+
+    public List<Entrant> findEntrantsForLogin( String ourOID, String year ) {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add( Restrictions.disjunction()
+                                .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                                .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
+                )
+                .createAlias( "examInfo", "examInfo" )
+                .add( Restrictions.eq( "examInfo.type", "ординатура" ) )
+                .add( Restrictions.eq( "examInfo.organization", ourOID ) )
+                .add( Restrictions.eq( "examInfo.year", year ) );
         return criteria.list();
     }
 }

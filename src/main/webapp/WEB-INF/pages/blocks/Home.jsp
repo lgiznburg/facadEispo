@@ -97,22 +97,14 @@
 
     <c:when test="${showType eq 'search'}">
 
-      <form:form action="home.htm?variant=search" commandName="searchForm" method="post">
-        <div  class="form-group row">
+      <form:form action="home.htm?variant=search" commandName="searchForm" method="post" cssClass="form-inline">
+        <div  class="form-group ">
           <fieldset>
-            <div class="col-3">
-              <form:input path="lastName" placeholder="Фамилия"/>
-            </div>
-            <div class="col-3">
-              <form:input path="caseNumber" placeholder="№ дела"/>
-            </div>
-            <div class="col-3">
-              <form:input path="snilsNumber" placeholder="СНИЛС"/>
-            </div>
+              <form:input path="lastName" placeholder="Фамилия" cssClass="form-control"/>
+              <form:input path="caseNumber" placeholder="№ дела" cssClass="form-control"/>
+              <form:input path="snilsNumber" placeholder="СНИЛС" cssClass="form-control"/>
           </fieldset>
-          <div class="col-3">
             <input type="submit" value="Найти" class="btn btn-primary"/>
-          </div>
         </div>
       </form:form>
 

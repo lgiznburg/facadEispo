@@ -34,16 +34,16 @@
 <div class="container" role="main">
 
   <%--<sec:authorize access="hasAnyRole('ROLE_ADMIN','ROLE_SERVICEMAN')">--%>
-    <div class="container-fluid">
+    <%--<div class="container-fluid">
       <div class="row">
         <div class="col-sm-2 sidebar">
           <c:import url="/WEB-INF/pages/static/AdminMenu.jsp"/>
         </div>
-        <div class="col-sm-10">
+        <div class="col-sm-10">--%>
           <c:import url="${content}"/>
-        </div>
+        <%--</div>
       </div>
-    </div>
+    </div>--%>
 
     <%--<div class="row">
       <c:import url="/WEB-INF/pages/static/AdminMenu.jsp"/>

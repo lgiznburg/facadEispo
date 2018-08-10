@@ -10,10 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
-import ru.rsmu.facadeEispo.model.Entrant;
-import ru.rsmu.facadeEispo.model.EntrantStatus;
-import ru.rsmu.facadeEispo.model.ExamInfo;
-import ru.rsmu.facadeEispo.model.Request;
+import ru.rsmu.facadeEispo.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,6 +102,9 @@ public class LoadFromTandemService implements ExcelLayout {
     private void loadRequests( HSSFSheet sheet, List<Entrant> entrants ) {
         int rowN = 1;  // skip header
 
+        List<Request> requests = new ArrayList<>();
+        Entrant current = null;
+
         do {
             HSSFRow row = sheet.getRow( rowN );
             // check if row is valid
@@ -123,6 +123,33 @@ public class LoadFromTandemService implements ExcelLayout {
             }
             Entrant entrant = findByName( entrants, firstName, middleName, lastName, birthDate );
             if ( entrant != null ) {
+                if ( current == null ) {  // new one
+                    current = entrant;
+                    if ( current.getId() > 0 ) {
+                        requests.addAll( current.getRequests() );
+                    }
+                }
+                if ( current != entrant ) {  // old one and switching to new one
+                    if ( current.getId() > 0 && requests.size() > 0 ) {
+                        for ( Request request : requests ) {
+                            switch ( request.getStatus() ) {
+                                case CONFIRMED:
+                                    request.setStatus( RequestStatus.RETIRED );
+                                    break;
+                                case REJECTED:
+                                case NEW:
+                                    request.setStatus( RequestStatus.TERMINATED );
+                                    break;
+                            }
+                        }
+                        entrantDao.saveAllEntities( requests );
+                        requests.clear();
+                    }
+                    current = entrant;
+                    if ( current.getId() > 0 ) {
+                        requests.addAll( current.getRequests() );
+                    }
+                }
                 Long snils = parseSnils( getCellValue( row, SNILS ) );;
                 if ( entrant.getSnilsNumber() == null ) {
                     // not yet initialized
@@ -145,6 +172,8 @@ public class LoadFromTandemService implements ExcelLayout {
                 examInfo.setYear( getCellValue( row, R_EXAM_YEAR ) );
                 if ( !entrant.getExamInfo().equalsByName( examInfo ) ) {
                     entrant.getExamInfo().update( examInfo );
+                    entrant.getExamInfo().setScore( 0 );
+                    entrant.getExamInfo().setResponse( "" );
                     if ( entrant.getStatus() == EntrantStatus.SUBMITTED ) {
                         entrant.setStatus( EntrantStatus.UPDATED );
                     }
@@ -169,6 +198,14 @@ public class LoadFromTandemService implements ExcelLayout {
                         entrant.setStatus( EntrantStatus.UPDATED );
                     }
                 }
+                else if ( requests.size() > 0 ) {  //existed entrant. remove updated request from the list
+                    for ( Iterator<Request> ir = requests.iterator(); ir.hasNext(); ) {
+                        Request r2 = ir.next();
+                        if ( existedRequest == r2 ) {
+                            ir.remove();
+                        }
+                    }
+                }
 
             } else {
                 logger.error( "Can't match request to entrant" );
@@ -176,6 +213,21 @@ public class LoadFromTandemService implements ExcelLayout {
 
             rowN++;
         } while ( true );
+        if ( current != null && current.getId() > 0 && requests.size() > 0 ) {
+            for ( Request request : requests ) {
+                switch ( request.getStatus() ) {
+                    case CONFIRMED:
+                        request.setStatus( RequestStatus.RETIRED );
+                        break;
+                    case REJECTED:
+                    case NEW:
+                        request.setStatus( RequestStatus.TERMINATED );
+                        break;
+                }
+            }
+            entrantDao.saveAllEntities( requests );
+            requests.clear();
+        }
     }
 
     private Entrant findByName( List<Entrant> entrants, String firstName, String middleName, String lastName, Date birthDate ) {
@@ -232,10 +284,10 @@ public class LoadFromTandemService implements ExcelLayout {
                         (lastName != null && !lastName.equalsIgnoreCase( entrant.getLastName() )) /*||
                         ( birthDate != null && !birthDate.equals( entrant.getBirthDate() ))*/ ) {
                     entrant.setStatus( EntrantStatus.UPDATED );
-                    if ( entrant.getDeception() != null ) {
-                        entrantDao.deleteEntity( entrant.getDeception() );
-                        entrant.setDeception( null );
-                    }
+//                    if ( entrant.getDeception() != null ) {
+//                        entrantDao.deleteEntity( entrant.getDeception() );
+//                        entrant.setDeception( null );
+//                    }
                 }
             }
             if ( firstName != null )  entrant.setFirstName( firstName );

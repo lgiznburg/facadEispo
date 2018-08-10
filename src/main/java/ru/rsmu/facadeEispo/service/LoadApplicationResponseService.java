@@ -6,7 +6,7 @@ import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.model.*;
 
 import java.io.*;
-import java.util.Date;
+import java.util.*;
 
 /**
  * @author leonid.
@@ -126,4 +126,67 @@ public class LoadApplicationResponseService {
             entrantDao.saveEntity( entrant.getExamInfo() );
         }
     }
+
+    public void loadWithdrawal( InputStream inputStream ) throws IOException {
+        //snils; oid; compaignId; specialty; financingType; targetReception; applicationDate;  status; errorInfo
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+
+        boolean skipHeader = true;
+        Entrant entrant = null;
+        Set<Entrant> entrants = new HashSet<>();
+        //Read File Line By Line
+        for (String strLine;(strLine = br.readLine()) != null;) {
+            if ( skipHeader ) {
+                skipHeader = false;
+                continue;
+            }
+            String[] cells = strLine.split( ";" );
+            if ( cells.length < 8 ) {
+                continue;
+            }
+            Long snils = ServiceUtils.parseSnils( cells[0] );
+            if ( snils == null ) {
+                continue;
+            }
+            if ( entrant == null || !snils.equals( entrant.getSnilsNumber() ) ) {
+                entrant = entrantDao.findEntrantBySnilsNumber( snils );
+                if ( entrant != null && !entrants.contains( entrant ) ) {
+                    entrants.add( entrant );
+                }
+            }
+            if ( entrant == null ) {
+                continue;
+            }
+
+            Request r1 = new Request();
+            r1.setSpeciality( cells[3] );
+            r1.setApplicationDate( ServiceUtils.parseDate( cells[6] ) );
+            r1.setFinancing( cells[4] );
+            r1.setTargetRequest( cells[5] );
+
+            for ( Request request : entrant.getRequests() ) {
+                if ( request.equalsByName( r1 ) ) {
+
+                    if ( !cells[7].startsWith( "не" ) ) {
+                        request.setStatus( RequestStatus.TERMINATED );
+                    }
+                    entrantDao.saveEntity( request );
+                }
+            }
+        }
+        for ( Entrant entrant1 : entrants ){
+            boolean terminated = true;
+            for ( Request request : entrant1.getRequests() ) {
+                if ( request.getStatus() != RequestStatus.TERMINATED ) {
+                    terminated = false;
+                    break;
+                }
+            }
+            if ( terminated ) {
+                entrant1.setStatus( EntrantStatus.RETIRED );
+                entrantDao.saveEntity( entrant1 );
+            }
+        }
+    }
+
 }

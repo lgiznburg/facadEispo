@@ -11,10 +11,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.dao.RequestDao;
-import ru.rsmu.facadeEispo.model.Entrant;
-import ru.rsmu.facadeEispo.model.Request;
-import ru.rsmu.facadeEispo.model.RequestStatus;
-import ru.rsmu.facadeEispo.model.StoredPropertyName;
+import ru.rsmu.facadeEispo.model.*;
+import ru.rsmu.facadeEispo.service.ServiceUtils;
 import ru.rsmu.facadeEispo.service.StoredPropertyService;
 
 import java.text.DateFormat;
@@ -150,14 +148,16 @@ public class CreateApplicationRequest  {
                     continue; //запрошено тестирование
                 }
             }
-            boolean rejected = false;
-            for ( Request request : entrant.getRequests() ) {
-                if ( request.getStatus() != RequestStatus.CONFIRMED ) {
-                    rejected = true;
-                    break;
+            if ( entrant.getStatus() == EntrantStatus.SUBMITTED ) {  // only SUBMITTED and ENFORCED selected
+                boolean rejected = false;
+                for ( Request request : entrant.getRequests() ) {
+                    if ( request.getStatus() != RequestStatus.CONFIRMED ) {
+                        rejected = true;
+                        break;
+                    }
                 }
+                if ( rejected ) continue;
             }
-            if ( rejected ) continue;
 
 
             result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
@@ -178,6 +178,56 @@ public class CreateApplicationRequest  {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
         String attachment = String.format("attachment; filename=\"entrant_scores_request_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+    @RequestMapping(value = "/createLoginRequest.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createLoginCsvRequest() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;dateOfBirth;specialty;date;attemptType;retryReason\n" );
+
+        List<Entrant> entrants = entrantDao.findEntrantsForLogin(
+                propertyService.getProperty( StoredPropertyName.SYSTEM_OID ),
+                ServiceUtils.YEAR_FORMAT.format( new Date() ));
+        for( Entrant entrant : entrants ) {
+            if ( !entrant.isValid() ) {
+                continue;
+            }
+            boolean rejected = false;
+            switch ( entrant.getStatus() ) {
+                case SUBMITTED:
+                    for ( Request request : entrant.getRequests() ) {
+                        if ( request.getStatus() != RequestStatus.CONFIRMED ) {
+                            rejected = true;
+                            break;
+                        }
+                    }
+                    break;
+                case RETIRED:
+                    rejected = true;
+            }
+            if ( rejected ) continue;
+            if ( entrant.getExamInfo().getScheduledDate() == null ) {
+                continue;
+            }
+
+
+            result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" );
+
+            result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+
+            result.append( entrant.getExamInfo().getSpeciality() ).append( ";" )
+                    .append( DATE_FORMAT.format( entrant.getExamInfo().getScheduledDate() ) ).append( ";" )
+                    .append( "1;\n" );
+
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"entrant_login_request_%s.csv\"", DATE_FORMAT.format( new Date() ) );
         headers.set( "Content-Disposition", attachment );
         return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
 
