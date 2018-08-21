@@ -35,6 +35,11 @@ public class EditEntrant extends BaseController {
     @ModelAttribute("entrant")
     public Entrant getEntrant( @RequestParam(value = "id") Long id ) {
         Entrant entrant = entrantDao.findEntity( Entrant.class, id );
+        assignDeception( entrant );
+        return entrant;
+    }
+
+    private void assignDeception( Entrant entrant ) {
         if ( entrant.getDeception() == null ) {
             entrant.setDeception( new Deception() );
             entrant.getDeception().setFirstName( entrant.getFirstName() );
@@ -42,7 +47,6 @@ public class EditEntrant extends BaseController {
             entrant.getDeception().setLastName( entrant.getLastName() );
             entrant.getDeception().setBirthDate( entrant.getBirthDate() );
         }
-        return entrant;
     }
 
     @ModelAttribute("entrantStatuses")
@@ -79,6 +83,7 @@ public class EditEntrant extends BaseController {
 
         entrantDao.saveEntity( entrant );
 
+        assignDeception( entrant );
         return buildModel( modelMap );
     }
 

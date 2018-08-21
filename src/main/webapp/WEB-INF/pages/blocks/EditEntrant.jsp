@@ -15,7 +15,7 @@
 </script>
 
 
-<h4>Редактирование ${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</h4>
+<h4>Редактирование №${entrant.caseNumber}  ${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</h4>
 
 <form:form commandName="entrant" action="editEntrant.htm" method="post" name="entrant">
   <form:hidden path="id"/>
@@ -65,6 +65,7 @@
     <div class="row">
       <div class="col-sm-2">${indx.index}</div>
       <div class="col-sm-5">${request.speciality}, ${request.financing}, целевое - ${request.targetRequest}</div>
+      <div class="col-sm-5">${request.response.response}</div>
     </div>
     <div class="form-group row">
       <form:label path="requests[${indx.index}].status" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Status</form:label>
@@ -76,10 +77,44 @@
     </div>
   </c:forEach>
 
-  <div class="row">
+  <div class="form-group row">
+    <form:label path="examInfo.organization" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Organization</form:label>
+    <div class="col-sm-5">
+      <form:input path="examInfo.organization"  cssClass="form-control"/>
+      <form:errors path="examInfo.organization" cssClass="text-danger" element="span"/>
+    </div>
+  </div>
+  <div class="form-group row">
+    <form:label path="examInfo.type" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Имя</form:label>
+    <div class="col-sm-5">
+      <form:input path="examInfo.type"  cssClass="form-control"/>
+      <form:errors path="examInfo.type" cssClass="text-danger" element="span"/>
+    </div>
+  </div>
+  <div class="form-group row">
+    <form:label path="examInfo.year" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Имя</form:label>
+    <div class="col-sm-5">
+      <form:input path="examInfo.year"  cssClass="form-control"/>
+      <form:errors path="examInfo.year" cssClass="text-danger" element="span"/>
+    </div>
+  </div>
+
+<%--
+  <div class="form-group row">
     <div class="col">${entrant.examInfo.organization} </div>
     <div class="col">${entrant.examInfo.type}</div>
     <div class="col">${entrant.examInfo.year}</div>
+  </div>
+--%>
+
+  <div class="form-group row">
+    <%--<form:label path="examInfo.score" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Баллы</form:label>
+    <div class="col-sm-5">
+      <form:input path="examInfo.score"  cssClass="form-control"/>
+      <form:errors path="examInfo.score" cssClass="text-danger" element="span"/>
+    </div>--%>
+      <div class="col-sm-4">Баллы: ${entrant.examInfo.score}</div>
+      <div class="col-sm-5">${entrant.examInfo.response}</div>
   </div>
 
   <div class="form-group row">

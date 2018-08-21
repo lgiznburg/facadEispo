@@ -18,7 +18,9 @@ import ru.rsmu.facadeEispo.service.StoredPropertyService;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author leonid.
@@ -138,12 +140,18 @@ public class CreateApplicationRequest  {
                 continue;
             }
             if ( "ординатура".equalsIgnoreCase( entrant.getExamInfo().getType() ) ) {
-                // ординатура
+                // имеем - ординатура
                 if ( type == null || !type.equals( "test" ) ) {
                     continue; //запрошена аккредитация
                 }
+                if ( entrant.getExamInfo().getOrganization().equals( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ) &&
+                        entrant.getExamInfo().getYear().equals( ServiceUtils.YEAR_FORMAT.format( new Date() ) ) &&
+                        entrant.getExamInfo().getScheduledDate() != null &&
+                        entrant.getExamInfo().getScheduledDate().after( new Date(  ) ) ) {
+                    continue;  //our testing - it does not take place yet
+                }
             }
-            else {  // аккредитация
+            else {  // имеем - аккредитация
                 if ( type != null && type.equals( "test" ) ) {
                     continue; //запрошено тестирование
                 }
@@ -151,7 +159,7 @@ public class CreateApplicationRequest  {
             if ( entrant.getStatus() == EntrantStatus.SUBMITTED ) {  // only SUBMITTED and ENFORCED selected
                 boolean rejected = false;
                 for ( Request request : entrant.getRequests() ) {
-                    if ( request.getStatus() != RequestStatus.CONFIRMED ) {
+                    if ( request.getStatus() != RequestStatus.CONFIRMED && request.getStatus() != RequestStatus.TERMINATED ) {
                         rejected = true;
                         break;
                     }
@@ -163,11 +171,11 @@ public class CreateApplicationRequest  {
             result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
                     .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" );
 
-            /*if ( entrant.getEntrant().getDeception() != null ) {
-                result.append( DATE_FORMAT.format( entrant.getEntrant().getDeception().getBirthDate() ) ).append( ";" );
-            } else {*/
+            if ( entrant.getDeception() != null ) {
+                result.append( DATE_FORMAT.format( entrant.getDeception().getBirthDate() ) ).append( ";" );
+            } else {
                 result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
-            //}
+            }
 
             result.append( entrant.getExamInfo().getType() ).append( ";" )
                     .append( entrant.getExamInfo().getYear() ).append( ";" )
@@ -192,10 +200,19 @@ public class CreateApplicationRequest  {
         List<Entrant> entrants = entrantDao.findEntrantsForLogin(
                 propertyService.getProperty( StoredPropertyName.SYSTEM_OID ),
                 ServiceUtils.YEAR_FORMAT.format( new Date() ));
+        List<LoginInfo> loginInfos = entrantDao.findAllLoginInfo();
+        Set<Long> alreadyRequested = new HashSet<>();
+        for ( LoginInfo loginInfo : loginInfos ) {
+            if ( loginInfo.isSuccess() ) {
+                alreadyRequested.add( loginInfo.getEntrant().getId() );
+            }
+        }
         for( Entrant entrant : entrants ) {
             if ( !entrant.isValid() ) {
                 continue;
             }
+            if ( alreadyRequested.contains( entrant.getId() ) ) { continue; }
+
             boolean rejected = false;
             switch ( entrant.getStatus() ) {
                 case SUBMITTED:

@@ -10,6 +10,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
 import ru.rsmu.facadeEispo.model.Entrant;
+import ru.rsmu.facadeEispo.model.LoginInfo;
 import ru.rsmu.facadeEispo.model.StoredPropertyName;
 import ru.rsmu.facadeEispo.service.ServiceUtils;
 import ru.rsmu.facadeEispo.service.StoredPropertyService;
@@ -129,6 +130,59 @@ public class PrintReport {
 
     }
 
+    @RequestMapping(value = "/createCsvLogins.htm")
+    public ResponseEntity<String> createCsvLogins() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "Номер дела;Логин;Пароль\n" );
+
+        List<LoginInfo> loginInfos = entrantDao.findAllLoginInfo( false );
+
+
+        for( LoginInfo loginInfo : loginInfos ) {
+            result.append( loginInfo.getEntrant().getCaseNumber() ).append( ";" );
+            if ( loginInfo.isSuccess() ) {
+                result.append( loginInfo.getLogin() ).append( ";" )
+                        .append( loginInfo.getPassword() ).append( "\n" );
+            } else {
+                result.append( "нет допуска;" )
+                        .append( loginInfo.getInfo() ).append( "\n" );
+            }
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"login_info_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+    @RequestMapping(value = "/createCsvScoresError.htm")
+    public ResponseEntity<String> createCsvScoresError() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "№ дела;ФИО;Способ получения ВИ;Ошибка\n" );
+
+        List<Entrant> entrants = entrantDao.findScoresErrors();
+
+
+        for( Entrant entrant : entrants ) {
+            result.append( entrant.getCaseNumber() ).append( ";" );
+            result.append( entrant.getLastName() ).append( " " )
+                    .append( entrant.getFirstName() ).append( " " )
+                    .append( entrant.getMiddleName() ).append( ";" );
+            result.append( "Тип " ).append( entrant.getExamInfo().getType() ).append( " " )
+                    .append( "Год " ).append( entrant.getExamInfo().getYear() ).append( " " )
+                    .append( "Организация " ).append( entrant.getExamInfo().getOrganization() ).append( ";" )
+                    .append( entrant.getExamInfo().getResponse() ).append( "\n" );
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"scores_error_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
 
 
 }

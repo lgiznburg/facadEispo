@@ -32,4 +32,10 @@ public interface ExcelLayout {
     public static final short L_SNILS = 0;
     public static final short L_SCHEDULED = 4;
 
+    //ACHIEVEMENTS LAYOUT
+    public static final short A_CASE = 1;
+    public static final short A_SCORE = 3;
+    public static final short A_ACHIEVEMENTS = 2;
+
+
 }

@@ -14,6 +14,11 @@ import java.util.*;
 @Component
 public class LoadApplicationResponseService {
 
+    private static final String HEADER_APPLICATION = "snils;oid;compaignId;specialty;applicationDate;financingType;targetReception;status;errorInfo";
+    private static final String HEADER_SCORES = "snils;oid;testResultType;testResultOrganization;testResultYear;specialty;result;status;errorInfo";
+    private static final String HEADER_WITHDRAWAL = "snils;oid;compaignId;specialty;financingType;targetReception;applicationDate;status;errorInfo";
+    private static final String HEADER_LOGINS = "snils;oid;specialty;date;login;password;status;errorInfo";
+
     @Autowired
     private EntrantDao entrantDao;
 
@@ -189,4 +194,54 @@ public class LoadApplicationResponseService {
         }
     }
 
+    public void loadLogins( InputStream inputStream ) throws IOException {
+        //snils; oid;specialty;date; login;password; status; errorInfo
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+
+        boolean skipHeader = true;
+        Entrant entrant = null;
+        //Read File Line By Line
+        for (String strLine;(strLine = br.readLine()) != null;) {
+            if ( skipHeader ) {
+                skipHeader = false;
+                continue;
+            }
+            String[] cells = strLine.split( ";" );
+            if ( cells.length < 7 ) {
+                continue;
+            }
+            Long snils = ServiceUtils.parseSnils( cells[0] );
+            if ( snils == null ) {
+                continue;
+            }
+            if ( entrant == null || !snils.equals( entrant.getSnilsNumber() ) ) {
+                entrant = entrantDao.findEntrantBySnilsNumber( snils );
+            }
+            if ( entrant == null ) {
+                continue;
+            }
+            LoginInfo loginInfo = entrantDao.findLoginInfo( entrant );
+            if ( loginInfo == null ) {
+                loginInfo = new LoginInfo();
+                loginInfo.setEntrant( entrant );
+            }
+
+            String comment = cells.length >= 8 ? cells[7] : "";
+            if ( comment.length() > 251 ) {
+                comment = comment.substring( 0, 250 );
+            }
+
+            loginInfo.setLogin( cells[4] );
+            loginInfo.setPassword( cells[5] );
+            if ( cells[6].startsWith( "не" ) ) {
+                loginInfo.setSuccess( false );
+                loginInfo.setInfo( comment );
+            } else {
+                loginInfo.setSuccess( true );
+                loginInfo.setInfo( "" );
+            }
+
+            entrantDao.saveEntity( loginInfo );
+        }
+    }
 }

@@ -56,7 +56,7 @@ public class Entrant implements Serializable {
     @JoinColumn(name = "deception_id")
     private Deception deception;
 
-    @OneToOne
+    @OneToOne(/*fetch = FetchType.EAGER*/)
     @JoinColumn(name = "exam_id")
     private ExamInfo examInfo;
 

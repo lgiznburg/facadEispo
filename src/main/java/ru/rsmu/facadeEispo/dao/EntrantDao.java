@@ -7,8 +7,10 @@ import org.springframework.stereotype.Repository;
 import ru.rsmu.facadeEispo.actions.SearchForm;
 import ru.rsmu.facadeEispo.model.Entrant;
 import ru.rsmu.facadeEispo.model.EntrantStatus;
+import ru.rsmu.facadeEispo.model.LoginInfo;
 import ru.rsmu.facadeEispo.model.RequestStatus;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -62,14 +64,14 @@ public class EntrantDao extends CommonDao {
                         .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
                 )
                 .createAlias( "examInfo", "examInfo" )
-                .add( Restrictions.eq( "examInfo.score", 0 ) );
+                .add( Restrictions.or( Restrictions.eq( "examInfo.score", 0 ), Restrictions.isNull( "examInfo.score" ) ) );
 
         return criteria.list();
     }
 
     public List<Entrant> findEntrantsWithScore() {
         Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
-                .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                .add( Restrictions.or( Restrictions.eq( "status", EntrantStatus.SUBMITTED ), Restrictions.eq( "status", EntrantStatus.ENFORCED ) ) )
                 .createAlias( "examInfo", "examInfo" )
                 .add( Restrictions.gt( "examInfo.score", 0 ) );
 
@@ -101,6 +103,41 @@ public class EntrantDao extends CommonDao {
                 .add( Restrictions.eq( "examInfo.type", "ординатура" ) )
                 .add( Restrictions.eq( "examInfo.organization", ourOID ) )
                 .add( Restrictions.eq( "examInfo.year", year ) );
+        return criteria.list();
+    }
+
+    public LoginInfo findLoginInfo( Entrant entrant ) {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( LoginInfo.class )
+                .add( Restrictions.eq( "entrant", entrant ) )
+                .setMaxResults( 1 );
+        return (LoginInfo) criteria.uniqueResult();
+    }
+
+    public List<LoginInfo> findAllLoginInfo() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( LoginInfo.class )
+                .add( Restrictions.eq( "success", true ) );
+        return criteria.list();
+    }
+
+    public List<LoginInfo> findAllLoginInfo( boolean successOnly ) {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( LoginInfo.class )
+                .createAlias( "entrant", "entrant" )
+                .createAlias( "entrant.examInfo", "examInfo" )
+                .add( Restrictions.gt( "examInfo.scheduledDate", new Date() ) );
+
+        if ( successOnly ) {
+            criteria.add( Restrictions.eq( "success", true ) );
+        }
+        return criteria.list();
+    }
+
+
+    public List<Entrant> findScoresErrors() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add( Restrictions.or( Restrictions.eq( "status", EntrantStatus.SUBMITTED ), Restrictions.eq( "status", EntrantStatus.ENFORCED ) ) )
+                .createAlias( "examInfo", "examInfo" )
+                .add( Restrictions.isNull( "examInfo.score" ) );
+
         return criteria.list();
     }
 }

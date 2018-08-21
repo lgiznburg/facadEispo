@@ -1,5 +1,6 @@
 package ru.rsmu.facadeEispo.service;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -18,6 +19,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author leonid.
@@ -29,6 +32,8 @@ public class LoadFromTandemService implements ExcelLayout {
     protected static final DateFormat DATE_FORMAT = new SimpleDateFormat( "dd.MM.yyyy" );
     protected static final DateFormat YEAR_FORMAT = new SimpleDateFormat( "yyyy" );
     protected static final Locale RU_LOCALE = Locale.forLanguageTag( "ru_RU" );
+
+    protected static final Pattern achievementsPattern = Pattern.compile( "\\d\\. ([^ ]+) . (\\d{2})" );
 
     @Autowired
     private EntrantDao entrantDao;
@@ -392,6 +397,75 @@ public class LoadFromTandemService implements ExcelLayout {
 
             rowN++;
         } while ( true );
+    }
+
+
+    public void loadScoresAndAchievements( InputStream file, boolean loginOnly ) throws IOException {
+
+        List<Entrant> entrants = entrantDao.findAllEntities( Entrant.class );
+        Map<Long, Entrant> entrantMap = new HashMap<>();
+        for ( Entrant entrant : entrants ) {
+            entrantMap.put( entrant.getCaseNumber(), entrant );
+        }
+
+        POIFSFileSystem fs = new POIFSFileSystem( file );
+        HSSFWorkbook wb = new HSSFWorkbook( fs );
+
+        if ( !loginOnly ) {
+            HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
+
+            int rowN = 1;  // skip header
+
+            do {
+                HSSFRow row = sheet.getRow( rowN );
+                // check if row is valid
+                if ( row == null || row.getCell( (short) 0 ) == null ) {
+                    break;
+                }
+
+                Long caseNumb = getCellNumber( row, A_CASE );
+                Entrant entrant = entrantMap.get( caseNumb );
+                if ( entrant != null && entrant.getExamInfo() != null ) {
+                    Long score = getCellNumber( row, A_SCORE );
+                    entrant.getExamInfo().setTotalScore( score != null ? score.intValue() : 0 );
+                    entrant.getExamInfo().setAchievements( parseAchievements( getCellValue( row, A_ACHIEVEMENTS )) );
+                } else {
+                    logger.error( "Can't find entrant by case number" );
+                }
+
+                rowN++;
+            } while ( true );
+        }
+        saveAllEntities( entrants );
+    }
+
+    private String parseAchievements( String cellValue ) {
+        if ( !StringUtils.isBlank( cellValue ) && !cellValue.equals( "0" ) ) {
+            StringBuilder builder = new StringBuilder(  );
+            Matcher matcher = achievementsPattern.matcher( cellValue );
+            while ( matcher.find() ) {
+                String name = matcher.group(1);
+                String score = matcher.group(2);
+                String orderCode = "г";
+                if ( name.contains( "СтпРФ" ) ) {
+                    orderCode = "а";
+                } else if ( name.contains( "Отл" ) ) {
+                    orderCode = "б";
+                } else if ( name.contains( "СтжСПО" ) ) {
+                    orderCode = "в1";
+                } else if ( name.contains( "СтжВО" ) ) {
+                    orderCode = "в2";
+                } else if ( name.contains( "Вол" ) ) {
+                    orderCode = "г1";
+                }
+                if ( builder.length() > 0  ) {
+                    builder.append( "," );
+                }
+                builder.append( orderCode ).append( "-" ).append( score );
+            }
+            return builder.toString();
+        }
+        return "";
     }
 
 }

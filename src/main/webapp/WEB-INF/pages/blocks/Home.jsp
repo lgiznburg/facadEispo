@@ -11,6 +11,7 @@
     <c:when test="${showType eq 'new'}"><c:set var="activeNew" value="active"/></c:when>
     <c:when test="${showType eq 'error'}"><c:set var="activeError" value="active"/></c:when>
     <c:when test="${showType eq 'search'}"><c:set var="activeSearch" value="active"/></c:when>
+    <c:when test="${showType eq 'scores'}"><c:set var="activeScores" value="active"/></c:when>
   </c:choose>
 
   <ul class="nav nav-tabs">
@@ -23,6 +24,9 @@
     <li class="nav-item">
       <a class="nav-link ${activeSearch}" href="<c:url value="/home.htm"><c:param name="variant" value="search"/></c:url>" >Поиск</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link ${activeScores}" href="<c:url value="/home.htm"><c:param name="variant" value="scores"/></c:url>" >Проблемные баллы</a>
+    </li>
   </ul>
 
   <h4>Поступающие</h4>
@@ -32,6 +36,12 @@
       <div class="row">
         <div class="col">
           <a href="<c:url value="/createCsvScores.htm"/>" class="btn btn-outline-primary" target="_blank">Баллы</a>
+        </div>
+        <div class="col">
+          <a href="<c:url value="/createScoresScript.htm"/>" class="btn btn-outline-primary">Скрипт для баллов</a>
+        </div>
+        <div class="col">
+          <a href="<c:url value="/createCsvLogins.htm"/>" class="btn btn-outline-primary" target="_blank">Логины для теста</a>
         </div>
       </div>
       <table class="table table-hover">
@@ -130,6 +140,40 @@
         </c:forEach>
         </tbody>
       </table>
+    </c:when>
+
+    <c:when test="${showType eq 'scores'}">
+
+      <div class="row">
+        <div class="col">
+          <a href="<c:url value="/createCsvScoresError.htm"/>" class="btn btn-outline-primary" target="_blank">Файл отчета</a>
+        </div>
+      </div>
+      <table class="table table-hover">
+        <thead>
+        <tr>
+          <th>Case # <br/> Name</th>
+          <th>Phone<br>Email</th>
+          <th>В заявлении</th>
+          <th>Ошибка</th>
+          <th>Ошибка баллов</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <c:forEach items="${entrants}" var="entrant">
+          <tr <c:if test="${not entrant.valid}">class="table-warning"</c:if> >
+            <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</a>
+              <br><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.caseNumber}</a></td>
+            <td>${entrant.phone} <br>${entrant.email}</td>
+            <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
+            <td>${entrant.requests[0].response.response}</td>
+            <td>${entrant.examInfo.response}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+
     </c:when>
 
   </c:choose>

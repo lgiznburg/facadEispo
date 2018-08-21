@@ -48,6 +48,8 @@ public class Home extends BaseController{
             entrants = entrantDao.findEntrantsWithError();
         } else if ( variant.equalsIgnoreCase( "search" ) ) {
             entrants = Collections.emptyList();
+        } else if ( variant.equalsIgnoreCase( "scores" ) ) {
+            entrants = entrantDao.findScoresErrors();
         }
         if ( entrants == null ) {
             entrants = entrantDao.findNewEntrants();
@@ -70,6 +72,9 @@ public class Home extends BaseController{
             }
             if( variant.equalsIgnoreCase( "search" ) ) {
                 return "search";
+            }
+            if ( variant.equalsIgnoreCase( "scores" ) ) {
+                return "scores";
             }
         }
         return "new";

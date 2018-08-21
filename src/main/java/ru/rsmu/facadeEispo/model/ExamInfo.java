@@ -44,6 +44,12 @@ public class ExamInfo implements Serializable {
     @Temporal( TemporalType.DATE )
     private Date scheduledDate;
 
+    @Column(name = "total_score")
+    private Integer totalScore = 0;
+
+    @Column
+    private String achievements;
+
     public ExamInfo() {
     }
 
@@ -121,6 +127,22 @@ public class ExamInfo implements Serializable {
 
     public void setScheduledDate( Date scheduledDate ) {
         this.scheduledDate = scheduledDate;
+    }
+
+    public Integer getTotalScore() {
+        return totalScore;
+    }
+
+    public void setTotalScore( Integer totalScore ) {
+        this.totalScore = totalScore;
+    }
+
+    public String getAchievements() {
+        return achievements;
+    }
+
+    public void setAchievements( String achievements ) {
+        this.achievements = achievements;
     }
 
     public boolean equalsByName( ExamInfo another ) {

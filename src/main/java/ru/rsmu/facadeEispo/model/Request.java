@@ -44,6 +44,16 @@ public class Request implements Serializable {
     @JoinColumn(name = "response_id")
     private EispoResponse response;
 
+    @Column
+    private boolean enrollment;
+
+    @Column(name = "enrollment_order")
+    private String enrollmentOrder;
+
+    @Column(name = "enrollment_order_date")
+    @Temporal( TemporalType.DATE )
+    private Date enrollmentOrderDate;
+
     public Request() {
     }
 
@@ -113,6 +123,30 @@ public class Request implements Serializable {
 
     public void setResponse( EispoResponse response ) {
         this.response = response;
+    }
+
+    public boolean isEnrollment() {
+        return enrollment;
+    }
+
+    public void setEnrollment( boolean enrollment ) {
+        this.enrollment = enrollment;
+    }
+
+    public String getEnrollmentOrder() {
+        return enrollmentOrder;
+    }
+
+    public void setEnrollmentOrder( String enrollmentOrder ) {
+        this.enrollmentOrder = enrollmentOrder;
+    }
+
+    public Date getEnrollmentOrderDate() {
+        return enrollmentOrderDate;
+    }
+
+    public void setEnrollmentOrderDate( Date enrollmentOrderDate ) {
+        this.enrollmentOrderDate = enrollmentOrderDate;
     }
 
     public boolean equalsByName( Request another ) {
