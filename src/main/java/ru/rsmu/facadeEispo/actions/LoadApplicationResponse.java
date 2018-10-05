@@ -37,78 +37,30 @@ public class LoadApplicationResponse extends BaseController {
 
     @RequestMapping( method = RequestMethod.POST, params = "response")
     public String onSubmitPage( HttpServletRequest request, ModelMap model ) {
+        LoadApplicationResponseService.ResponseType type = LoadApplicationResponseService.ResponseType.UNDEFINED;
         try {
             if ( request instanceof MultipartHttpServletRequest ) {
                 MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
                 if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
                     MultipartFile file = multipart.getFile( "studentsFile" );
                     if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
-                        /*List<String> messages =*/ responseService.loadResponse( file.getInputStream());
-                        //model.put( "messages", messages );
+                        type = responseService.loadResponse( file.getInputStream() );
                     }
                 }
             }
-        } catch ( IOException e ) {
+        } catch (IOException e) {
             logger.error( "Can't upload application response CSV file", e );
         }
-        return "redirect:/home.htm?variant=error";
-    }
+        switch ( type ) {
+            case APPLICATION:
+                return "redirect:/home.htm?variant=error";
+            case SCORES:
+                return "redirect:/home.htm?variant=scores";
 
-    @RequestMapping( method = RequestMethod.POST, params = "scores")
-    public String onUpdateScores( HttpServletRequest request, ModelMap model ) {
-        try {
-            if ( request instanceof MultipartHttpServletRequest ) {
-                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
-                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
-                    MultipartFile file = multipart.getFile( "studentsFile" );
-                    if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
-                        /*List<String> messages =*/ responseService.loadScores( file.getInputStream() );
-                        //model.put( "messages", messages );
-                    }
-                }
-            }
-        } catch ( IOException e ) {
-            logger.error( "Can't upload application response CSV file", e );
-        }
-        return "redirect:/home.htm?variant=scores";
-    }
 
-    @RequestMapping( method = RequestMethod.POST, params = "withdrawal")
-    public String onUpdateWithdrawal( HttpServletRequest request, ModelMap model ) {
-        try {
-            if ( request instanceof MultipartHttpServletRequest ) {
-                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
-                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
-                    MultipartFile file = multipart.getFile( "studentsFile" );
-                    if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
-                        /*List<String> messages =*/ responseService.loadWithdrawal( file.getInputStream() );
-                        //model.put( "messages", messages );
-                    }
-                }
-            }
-        } catch ( IOException e ) {
-            logger.error( "Can't upload application response CSV file", e );
         }
         return "redirect:/home.htm";
     }
 
-    @RequestMapping( method = RequestMethod.POST, params = "login")
-    public String onUpdateLogins( HttpServletRequest request, ModelMap model ) {
-        try {
-            if ( request instanceof MultipartHttpServletRequest ) {
-                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
-                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
-                    MultipartFile file = multipart.getFile( "studentsFile" );
-                    if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
-                        /*List<String> messages =*/ responseService.loadLogins( file.getInputStream() );
-                        //model.put( "messages", messages );
-                    }
-                }
-            }
-        } catch ( IOException e ) {
-            logger.error( "Can't upload application response CSV file", e );
-        }
-        return "redirect:/home.htm";
-    }
 
 }

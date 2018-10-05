@@ -39,3 +39,50 @@
     </div>
   </fieldset>
 </form>
+
+<h4>
+  Load Scores and Achievements:
+</h4>
+<form action="<c:url value="/loadFormTandem.htm"/>" method="post"  enctype="multipart/form-data">
+  <fieldset>
+    <input type="hidden" name="achievements" value="1">
+    <div  class="form-group row">
+      <div class="col-5">
+        <label>
+          <span>Select a file:</span>
+          <input type="file" name="studentsFile" class="form-control-file"/>
+        </label>
+      </div>
+    </div>
+
+    <div  class="form-group row">
+      <div class="col-5">
+        <input type="submit" value="Submit" class="btn btn-primary"/>
+      </div>
+    </div>
+  </fieldset>
+</form>
+
+
+<h4>
+  Load Enrollment:
+</h4>
+<form action="<c:url value="/loadFormTandem.htm"/>" method="post"  enctype="multipart/form-data">
+  <fieldset>
+    <input type="hidden" name="enrollment" value="1">
+    <div  class="form-group row">
+      <div class="col-5">
+        <label>
+          <span>Select a file:</span>
+          <input type="file" name="studentsFile" class="form-control-file"/>
+        </label>
+      </div>
+    </div>
+
+    <div  class="form-group row">
+      <div class="col-5">
+        <input type="submit" value="Submit" class="btn btn-primary"/>
+      </div>
+    </div>
+  </fieldset>
+</form>

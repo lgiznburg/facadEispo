@@ -140,4 +140,35 @@ public class EntrantDao extends CommonDao {
 
         return criteria.list();
     }
+
+    public List<Entrant> findEnrollments() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add( Restrictions.disjunction()
+                                .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                                .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
+                        //.add( Restrictions.eq( "status", EntrantStatus.RETIRED ) )
+                )
+                .createAlias( "requests", "requests" )
+                .createAlias("requests.enrollmentResponse", "enrollmentResponse",
+                        Criteria.LEFT_JOIN,
+                        Restrictions.eq( "enrollmentResponse.success", false ) )
+                .setResultTransformer( Criteria.DISTINCT_ROOT_ENTITY );
+
+        return criteria.list();
+    }
+
+    public List<Entrant> findFinalErrors() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add( Restrictions.disjunction()
+                                .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
+                                .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
+                        //.add( Restrictions.eq( "status", EntrantStatus.RETIRED ) )
+                )
+                .createAlias( "requests", "requests" )
+                .createAlias( "requests.enrollmentResponse", "enrollmentResponse" )
+                .add( Restrictions.eq( "enrollmentResponse.success", false ) )
+                .setResultTransformer( Criteria.DISTINCT_ROOT_ENTITY );
+
+        return criteria.list();
+   }
 }

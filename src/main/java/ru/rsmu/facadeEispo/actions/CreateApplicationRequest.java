@@ -251,5 +251,86 @@ public class CreateApplicationRequest  {
     }
 
 
+    @RequestMapping(value = "/createFinalResults.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createFinalResults() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;compaignId;dateOfBirth;specialty;financingType;targetReception;applicationDate;amountScore;testResult;individualAchievements;applicationStatus;admissionOrderNumber;admissionOrderDate;regulationsParagraph;diplomaIssueDate;diplomaSpecialty\n" );
+
+        List<Entrant> entrants = entrantDao.findEnrollments();
+        for( Entrant entrant : entrants ) {
+
+            for ( Request request : entrant.getRequests() ) {
+                EnrollmentResponse enrollmentResponse = request.getEnrollmentResponse();
+                if ( enrollmentResponse != null && enrollmentResponse.isSuccess() ) {
+                    continue;  // skip success
+                }
+                if ( entrant.getStatus() == EntrantStatus.ENFORCED && !entrant.isEnrollment() ) {
+                    continue;
+                }
+                if ( request.getStatus() == RequestStatus.RETIRED || request.getStatus() == RequestStatus.TERMINATED ) {
+                    continue;
+                }
+                int forceStatus = 0;
+                if ( entrant.getExamInfo().getScore() == null || entrant.getExamInfo().getScore() == 0 ) {
+                    forceStatus = 4;
+                }
+
+                result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
+                        .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" )
+                        .append( propertyService.getProperty( StoredPropertyName.SYSTEM_CAMPAIGN_ID ) ).append( ";" );
+
+                result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+
+                result.append( request.getSpeciality() ).append( ";" )
+                        .append( request.getFinancing() ).append( ";" )
+                        .append( request.getTargetRequest() ).append( ";" )
+                        .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" );
+
+                if ( forceStatus != 4 ) {
+                    result.append( entrant.getExamInfo().getTotalScore() ).append( ";" )
+                            .append( entrant.getExamInfo().getScore() == null ? 0 : entrant.getExamInfo().getScore() ).append( ";" )
+                            .append( entrant.getExamInfo().getAchievements().replace( "г1", "г" ) ).append( ";" );
+                } else {
+                    result.append( "0;;;" );
+                }
+
+                if ( request.isEnrollment() ) {
+                    result.append( "1;" )
+                            .append( request.getEnrollmentOrder() ).append( ";" )
+                            .append( DATE_FORMAT.format( request.getEnrollmentOrderDate() ) ).append( ";" );
+                }
+                else {
+                    if ( request.getStatus() == RequestStatus.CONFIRMED ||
+                            (entrant.getStatus() == EntrantStatus.ENFORCED && request.getStatus() == RequestStatus.REJECTED ) ) {
+                        result.append( "2;;;" );
+                    }
+                    else if ( request.getStatus() == RequestStatus.REJECTED || forceStatus == 4 ) {
+                        result.append( "4;;;" );
+                    } else {
+                        result.append( "3;;;" );
+                    }
+                }
+                if ( !entrant.getCitizenship().equals( "643" ) ) {
+                    if ( enrollmentResponse != null && enrollmentResponse.getResponse().equals( "Неверно указан пункт порядка приема" )) {
+                        result.append( "63" );
+                    } else {
+                        result.append( "66" );
+                    }
+                }
+                result.append( ";" )
+                        .append( entrant.getDiplomaIssueDate() != null ? DATE_FORMAT.format( entrant.getDiplomaIssueDate()) : ""  ).append( ";" )
+                        .append( entrant.getExamInfo().getSpeciality() ).append( "\n" );
+            }
+
+
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"enrollment_results_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
 
 }

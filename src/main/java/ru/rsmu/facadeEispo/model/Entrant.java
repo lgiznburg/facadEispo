@@ -49,6 +49,10 @@ public class Entrant implements Serializable {
     @Column
     private String citizenship;
 
+    @Column(name = "diploma_date")
+    @Temporal( TemporalType.DATE )
+    private Date diplomaIssueDate;
+
     @OneToMany(mappedBy = "entrant")
     private List<Request> requests;
 
@@ -187,6 +191,14 @@ public class Entrant implements Serializable {
         this.examInfo = examInfo;
     }
 
+    public Date getDiplomaIssueDate() {
+        return diplomaIssueDate;
+    }
+
+    public void setDiplomaIssueDate( Date diplomaIssueDate ) {
+        this.diplomaIssueDate = diplomaIssueDate;
+    }
+
     public boolean equalsByName( Entrant another ) {
         boolean equals = true;
         if ( equals && !(( firstName == null && another.getFirstName() == null ) || ( firstName != null && firstName.equalsIgnoreCase( another.getFirstName() ))) ) {
@@ -222,5 +234,14 @@ public class Entrant implements Serializable {
         return valid && examInfo.isValid() &&
                 birthDate != null && snilsNumber != null && snilsNumber != 0 &&
                 !StringUtils.isEmpty( citizenship );
+    }
+
+    public boolean isEnrollment() {
+        if ( requests != null ) {
+            for ( Request request : requests ) {
+                if ( request.isEnrollment() ) return true;
+            }
+        }
+        return false;
     }
 }

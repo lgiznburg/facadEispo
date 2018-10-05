@@ -58,5 +58,45 @@ public class LoadFromTandem  extends BaseController {
         return "redirect:/home.htm"/*buildModel( model )*/;
     }
 
+    @RequestMapping( method = RequestMethod.POST, params = "achievements")
+    public String onGettingAchievements( HttpServletRequest request, ModelMap model,
+                                @RequestParam(value = "loadTestDate", required = false) Integer loadTestDate ) {
+        try {
+            if ( request instanceof MultipartHttpServletRequest ) {
+                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
+                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
+                    MultipartFile file = multipart.getFile( "studentsFile" );
+                    if ( file.getOriginalFilename().matches( ".*\\.xls" ) ) {
+                        boolean loginOnly = loadTestDate != null && loadTestDate > 0;
+                        /*List<String> messages =*/ loadFromTandemService.loadScoresAndAchievements( file.getInputStream() );
+                        //model.put( "messages", messages );
+                    }
+                }
+            }
+        } catch ( IOException e ) {
+            logger.error( "Can't upload information from Excel file", e );
+        }
+        return "redirect:/home.htm"/*buildModel( model )*/;
+    }
 
+    @RequestMapping( method = RequestMethod.POST, params = "enrollment")
+    public String onGettingEnrollment( HttpServletRequest request, ModelMap model,
+                                         @RequestParam(value = "loadTestDate", required = false) Integer loadTestDate ) {
+        try {
+            if ( request instanceof MultipartHttpServletRequest ) {
+                MultipartHttpServletRequest multipart = (MultipartHttpServletRequest) request;
+                if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
+                    MultipartFile file = multipart.getFile( "studentsFile" );
+                    if ( file.getOriginalFilename().matches( ".*\\.xls" ) ) {
+                        boolean loginOnly = loadTestDate != null && loadTestDate > 0;
+                        /*List<String> messages =*/ loadFromTandemService.loadEnrollmentOrder( file.getInputStream() );
+                        //model.put( "messages", messages );
+                    }
+                }
+            }
+        } catch ( IOException e ) {
+            logger.error( "Can't upload information from Excel file", e );
+        }
+        return "redirect:/home.htm"/*buildModel( model )*/;
+    }
 }

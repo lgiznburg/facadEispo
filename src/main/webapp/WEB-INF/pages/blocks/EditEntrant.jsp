@@ -15,7 +15,7 @@
 </script>
 
 
-<h4>Редактирование №${entrant.caseNumber}  ${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</h4>
+<h4>Редактирование №${entrant.caseNumber} (снилс ${entrant.snilsNumber}) ${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</h4>
 
 <form:form commandName="entrant" action="editEntrant.htm" method="post" name="entrant">
   <form:hidden path="id"/>
@@ -51,6 +51,13 @@
     </div>
     <div class="col-sm-2"><fmt:formatDate value="${entrant.birthDate}" pattern="dd.MM.yyyy"/> </div>
   </div>
+  <div class="form-group row">
+    <form:label path="citizenship" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Гражданство</form:label>
+    <div class="col-sm-5">
+      <form:input path="citizenship"  cssClass="form-control"/>
+      <form:errors path="citizenship" cssClass="text-danger" element="span"/>
+    </div>
+  </div>
 
   <div class="form-group row">
     <form:label path="status" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Status</form:label>
@@ -85,17 +92,24 @@
     </div>
   </div>
   <div class="form-group row">
-    <form:label path="examInfo.type" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Имя</form:label>
+    <form:label path="examInfo.type" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Тип</form:label>
     <div class="col-sm-5">
       <form:input path="examInfo.type"  cssClass="form-control"/>
       <form:errors path="examInfo.type" cssClass="text-danger" element="span"/>
     </div>
   </div>
   <div class="form-group row">
-    <form:label path="examInfo.year" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Имя</form:label>
+    <form:label path="examInfo.year" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Год</form:label>
     <div class="col-sm-5">
       <form:input path="examInfo.year"  cssClass="form-control"/>
       <form:errors path="examInfo.year" cssClass="text-danger" element="span"/>
+    </div>
+  </div>
+  <div class="form-group row">
+    <form:label path="examInfo.speciality" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Специальность</form:label>
+    <div class="col-sm-5">
+      <form:input path="examInfo.speciality"  cssClass="form-control"/>
+      <form:errors path="examInfo.speciality" cssClass="text-danger" element="span"/>
     </div>
   </div>
 

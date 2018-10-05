@@ -12,6 +12,7 @@
     <c:when test="${showType eq 'error'}"><c:set var="activeError" value="active"/></c:when>
     <c:when test="${showType eq 'search'}"><c:set var="activeSearch" value="active"/></c:when>
     <c:when test="${showType eq 'scores'}"><c:set var="activeScores" value="active"/></c:when>
+    <c:when test="${showType eq 'final'}"><c:set var="activeFinal" value="active"/></c:when>
   </c:choose>
 
   <ul class="nav nav-tabs">
@@ -26,6 +27,9 @@
     </li>
     <li class="nav-item">
       <a class="nav-link ${activeScores}" href="<c:url value="/home.htm"><c:param name="variant" value="scores"/></c:url>" >Проблемные баллы</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link ${activeFinal}" href="<c:url value="/home.htm"><c:param name="variant" value="final"/></c:url>" >Финальные ошибки</a>
     </li>
   </ul>
 
@@ -107,7 +111,7 @@
 
     <c:when test="${showType eq 'search'}">
 
-      <form:form action="home.htm?variant=search" commandName="searchForm" method="post" cssClass="form-inline">
+      <form:form action="home.htm?variant=search" commandName="searchForm" method="get" cssClass="form-inline">
         <div  class="form-group ">
           <fieldset>
               <form:input path="lastName" placeholder="Фамилия" cssClass="form-control"/>
@@ -169,6 +173,37 @@
             <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
             <td>${entrant.requests[0].response.response}</td>
             <td>${entrant.examInfo.response}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+
+    </c:when>
+
+    <c:when test="${showType eq 'final'}">
+
+      <table class="table table-hover">
+        <thead>
+        <tr>
+          <th>Case # <br/>Name</th>
+          <th>СНИЛС</th>
+          <th>Статус</th>
+          <th>В заявлении</th>
+          <th>Баллы</th>
+          <th>Ошибка</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <c:forEach items="${entrants}" var="entrant">
+          <tr <c:if test="${entrant.enrollment}">class="table-success"</c:if> >
+            <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</a>
+              <br><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.caseNumber}</a></td>
+            <td>${entrant.snilsNumber}</td>
+            <td>${entrant.status}</td>
+            <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
+            <td>${entrant.examInfo.totalScore} - ${entrant.examInfo.score}</td>
+            <td>${entrant.requests[0].enrollmentResponse.response}</td>
           </tr>
         </c:forEach>
         </tbody>

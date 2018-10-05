@@ -54,6 +54,10 @@ public class Request implements Serializable {
     @Temporal( TemporalType.DATE )
     private Date enrollmentOrderDate;
 
+    @ManyToOne
+    @JoinColumn(name = "rinal_response_id")
+    private EnrollmentResponse enrollmentResponse;
+
     public Request() {
     }
 
@@ -147,6 +151,14 @@ public class Request implements Serializable {
 
     public void setEnrollmentOrderDate( Date enrollmentOrderDate ) {
         this.enrollmentOrderDate = enrollmentOrderDate;
+    }
+
+    public EnrollmentResponse getEnrollmentResponse() {
+        return enrollmentResponse;
+    }
+
+    public void setEnrollmentResponse( EnrollmentResponse enrollmentResponse ) {
+        this.enrollmentResponse = enrollmentResponse;
     }
 
     public boolean equalsByName( Request another ) {

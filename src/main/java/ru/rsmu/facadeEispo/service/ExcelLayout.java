@@ -11,6 +11,7 @@ public interface ExcelLayout {
     public static final short BIRTH_DATE = 0;
     public static final short EMAIL = 32;
     public static final short PHONE = 31;
+    public static final short DIPLOMA_DATE = 18;
 
     public static final short SNILS = 0;
     public static final short R_FIRST_NAME = 2;
@@ -37,5 +38,14 @@ public interface ExcelLayout {
     public static final short A_SCORE = 3;
     public static final short A_ACHIEVEMENTS = 2;
 
+
+    //parse orders
+    public static final short SPECIALITY = 49;
+    public static final short EDU_FORM = 51;
+    public static final short EDU_PERIOD = 52;
+    public static final short COMPENSATION_TYPE = 53;
+    public static final short TARGETING = 54;
+    public static final short ORDER_NUMBER = 56;
+    public static final short ORDER_DATE = 57;
 
 }

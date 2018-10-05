@@ -34,6 +34,7 @@ public class LoadFromTandemService implements ExcelLayout {
     protected static final Locale RU_LOCALE = Locale.forLanguageTag( "ru_RU" );
 
     protected static final Pattern achievementsPattern = Pattern.compile( "\\d\\. ([^ ]+) . (\\d{2})" );
+    protected static final Pattern specialityPattern = Pattern.compile( "\\d{2}\\.\\d{2}\\.\\d{2}" );
 
     @Autowired
     private EntrantDao entrantDao;
@@ -64,8 +65,8 @@ public class LoadFromTandemService implements ExcelLayout {
 
         } else {
 
-            HSSFSheet sheet = wb.getSheetAt( 2 );  // login request page
-            loadLoginRequests( sheet, entrants, true );
+            HSSFSheet sheet = wb.getSheetAt( 0 );  // login request page
+            loadDiplomaDate( sheet, entrants );
         }
 
         saveAllEntities( entrants );
@@ -277,12 +278,7 @@ public class LoadFromTandemService implements ExcelLayout {
             String firstName = getCellValue( row, FIRST_NAME );
             String middleName = getCellValue( row, MIDDLE_NAME );
             String lastName = getCellValue( row, LAST_NAME );
-            /*Date birthDate;
-            try {
-                birthDate = DATE_FORMAT.parse( getCellValue( row, BIRTH_DATE ) );
-            } catch (ParseException e) {
-                birthDate = null;
-            }*/
+            Date diplomaDate = ServiceUtils.parseDate( getCellValue( row, DIPLOMA_DATE ) );
             if ( entrant.getStatus() == EntrantStatus.SUBMITTED ) {
                 if ( (firstName != null && !firstName.equalsIgnoreCase( entrant.getFirstName() )) ||
                         (middleName != null && !middleName.equalsIgnoreCase( entrant.getMiddleName() )) ||
@@ -300,6 +296,7 @@ public class LoadFromTandemService implements ExcelLayout {
             if ( lastName != null ) entrant.setLastName( lastName );
             //if ( birthDate != null ) entrant.setBirthDate( birthDate );
             //entrantDao.saveEntity( entrant );
+            entrant.setDiplomaIssueDate( diplomaDate );
 
             entrants.add( entrant );
 
@@ -307,6 +304,38 @@ public class LoadFromTandemService implements ExcelLayout {
         } while ( true );
     }
 
+    private void loadDiplomaDate( HSSFSheet sheet, List<Entrant> entrants ) {
+
+        Set<Long> cases = new HashSet<>();
+
+        int rowN = 1;  // skip header
+        do {
+            HSSFRow row = sheet.getRow( rowN );
+            // check if row is valid
+            if ( row == null || row.getCell( (short) 0 ) == null ) {
+                break;
+            }
+
+            Long caseNumber = getCellNumber( row, CASE_NUMBER );
+            if ( cases.contains( caseNumber ) ) {
+                rowN++;
+                continue;
+            }
+            cases.add( caseNumber );
+
+            Entrant entrant = entrantDao.findEntrantByCaseNumber( caseNumber );
+            if ( entrant == null ) {
+                rowN++;
+                continue;
+            }
+            Date diplomaDate = ServiceUtils.parseDate( getCellValue( row, DIPLOMA_DATE ) );
+            entrant.setDiplomaIssueDate( diplomaDate );
+
+            entrants.add( entrant );
+
+            rowN++;
+        } while ( true );
+    }
 
     private String getCellValue( HSSFRow row, short cellN ) {
         HSSFCell cell = row.getCell( cellN );
@@ -400,7 +429,7 @@ public class LoadFromTandemService implements ExcelLayout {
     }
 
 
-    public void loadScoresAndAchievements( InputStream file, boolean loginOnly ) throws IOException {
+    public void loadScoresAndAchievements( InputStream file ) throws IOException {
 
         List<Entrant> entrants = entrantDao.findAllEntities( Entrant.class );
         Map<Long, Entrant> entrantMap = new HashMap<>();
@@ -411,31 +440,30 @@ public class LoadFromTandemService implements ExcelLayout {
         POIFSFileSystem fs = new POIFSFileSystem( file );
         HSSFWorkbook wb = new HSSFWorkbook( fs );
 
-        if ( !loginOnly ) {
-            HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
+        HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
 
-            int rowN = 1;  // skip header
+        int rowN = 1;  // skip header
 
-            do {
-                HSSFRow row = sheet.getRow( rowN );
-                // check if row is valid
-                if ( row == null || row.getCell( (short) 0 ) == null ) {
-                    break;
-                }
+        do {
+            HSSFRow row = sheet.getRow( rowN );
+            // check if row is valid
+            if ( row == null || row.getCell( (short) 0 ) == null ) {
+                break;
+            }
 
-                Long caseNumb = getCellNumber( row, A_CASE );
-                Entrant entrant = entrantMap.get( caseNumb );
-                if ( entrant != null && entrant.getExamInfo() != null ) {
-                    Long score = getCellNumber( row, A_SCORE );
-                    entrant.getExamInfo().setTotalScore( score != null ? score.intValue() : 0 );
-                    entrant.getExamInfo().setAchievements( parseAchievements( getCellValue( row, A_ACHIEVEMENTS )) );
-                } else {
-                    logger.error( "Can't find entrant by case number" );
-                }
+            Long caseNumb = parseSnils( getCellValue( row, A_CASE ) );  //parse long value
+            Entrant entrant = entrantMap.get( caseNumb );
+            if ( entrant != null && entrant.getExamInfo() != null ) {
+                Long score = getCellNumber( row, A_SCORE );
+                entrant.getExamInfo().setTotalScore( score != null ? score.intValue() : 0 );
+                entrant.getExamInfo().setAchievements( parseAchievements( getCellValue( row, A_ACHIEVEMENTS ) ) );
+            } else {
+                logger.error( "Can't find entrant by case number" );
+            }
 
-                rowN++;
-            } while ( true );
-        }
+            rowN++;
+        } while ( true );
+
         saveAllEntities( entrants );
     }
 
@@ -467,5 +495,59 @@ public class LoadFromTandemService implements ExcelLayout {
         }
         return "";
     }
+
+    public void loadEnrollmentOrder( InputStream file ) throws IOException {
+
+
+        POIFSFileSystem fs = new POIFSFileSystem( file );
+        HSSFWorkbook wb = new HSSFWorkbook( fs );
+
+        HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
+
+        int rowN = 1;  // skip header
+
+        do {
+            HSSFRow row = sheet.getRow( rowN );
+            // check if row is valid
+            if ( row == null || row.getCell( (short) 0 ) == null ) {
+                break;
+            }
+
+            Long caseNumb = parseSnils( getCellValue( row, CASE_NUMBER ) );  //parse long value
+            Entrant entrant = entrantDao.findEntrantByCaseNumber( caseNumb );
+            if ( entrant != null && entrant.getExamInfo() != null ) {
+                String specLong = getCellValue( row, SPECIALITY );
+                Matcher matcher = specialityPattern.matcher( specLong );
+                String speciality = "";
+                if ( matcher.find() ) {
+                    speciality = matcher.group();
+                }
+                String targeting = getCellValue( row, TARGETING );
+                String compensation = getCellValue( row, COMPENSATION_TYPE );
+                if ( compensation == null || !compensation.equalsIgnoreCase( "бюджет" ) ) {
+                    compensation = "договор";
+                }
+                Request toCompare = new Request();
+                toCompare.setFinancing( compensation );
+                toCompare.setSpeciality( speciality );
+                toCompare.setTargetRequest( targeting );
+                for ( Request request : entrant.getRequests() ) {
+                    if ( request.equalsByName( toCompare ) ) {
+                        request.setEnrollment( true );
+                        request.setEnrollmentOrder( getCellValue( row, ORDER_NUMBER ) );
+                        request.setEnrollmentOrderDate( ServiceUtils.parseDate( getCellValue( row, ORDER_DATE ) ) );
+                        entrantDao.saveEntity( request );
+                        break;
+                    }
+                }
+            } else {
+                logger.error( "Can't find entrant by case number" );
+            }
+
+            rowN++;
+        } while ( true );
+
+    }
+
 
 }

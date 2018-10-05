@@ -1,5 +1,7 @@
 package ru.rsmu.facadeEispo.service;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,4 +39,22 @@ public class ServiceUtils {
         return birthDate;
     }
 
+    public static String getCellValue( HSSFRow row, short cellN ) {
+        HSSFCell cell = row.getCell( cellN );
+        if ( cell != null ) {
+            String value;
+            switch ( cell.getCellType() ) {
+                case HSSFCell.CELL_TYPE_STRING:
+                    value = cell.getRichStringCellValue().getString().trim();
+                    break;
+                case HSSFCell.CELL_TYPE_NUMERIC:
+                    value = Long.toString( Math.round( cell.getNumericCellValue() ) );
+                    break;
+                default:
+                    return null;
+            }
+            return value;
+        }
+        return null;
+    }
 }

@@ -17,7 +17,8 @@ public class Deception implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    //private Entrant entrant;
+    @Transient
+    private Entrant entrant;
 
     @Column(name = "first_name")
     private String firstName;
@@ -70,5 +71,13 @@ public class Deception implements Serializable {
 
     public void setBirthDate( Date birthDate ) {
         this.birthDate = birthDate;
+    }
+
+    public Entrant getEntrant() {
+        return entrant;
+    }
+
+    public void setEntrant( Entrant entrant ) {
+        this.entrant = entrant;
     }
 }
