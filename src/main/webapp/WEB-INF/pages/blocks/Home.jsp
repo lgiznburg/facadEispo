@@ -111,7 +111,7 @@
 
     <c:when test="${showType eq 'search'}">
 
-      <form:form action="home.htm?variant=search" commandName="searchForm" method="get" cssClass="form-inline">
+      <form:form action="home.htm?variant=search" commandName="searchForm" method="post" cssClass="form-inline">
         <div  class="form-group ">
           <fieldset>
               <form:input path="lastName" placeholder="Фамилия" cssClass="form-control"/>
