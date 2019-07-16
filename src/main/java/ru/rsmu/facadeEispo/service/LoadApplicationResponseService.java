@@ -120,9 +120,9 @@ public class LoadApplicationResponseService {
                 EispoResponse response = request.getResponse()==null ? new EispoResponse() : request.getResponse();
                 response.setRequest( request );
                 String comment = cells.length >= 9 ? cells[8] : "";
-                if ( comment.length() > 251 ) {
+                /*if ( comment.length() > 251 ) {
                     comment = comment.substring( 0, 250 );
-                }
+                }*/
                 response.setResponse( comment );
 
                 if ( cells[7].startsWith( "не" ) ) {

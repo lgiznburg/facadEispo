@@ -23,7 +23,7 @@ public class EispoResponse implements Serializable {
     @Column
     private boolean success;
 
-    @Column
+    @Column(name = "full_response")
     private String response;
 
     @Column

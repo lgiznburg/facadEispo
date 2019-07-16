@@ -72,10 +72,10 @@ public class PrintReport {
 
         for( Entrant entrant : entrants ) {
             String response = entrant.getRequests().get( 0 ).getResponse().getResponse();
-            if ( response.lastIndexOf( " В заявлении" ) > 0 ) {
+            /*if ( response.lastIndexOf( " В заявлении" ) > 0 ) {
                 response = response.substring( 0, response.lastIndexOf( " В заявлении" ) );
                 response += " Есть еще одно заявление в другую организацию с такими же данными";
-            }
+            }*/
             result.append( entrant.getCaseNumber() ).append( ";" );
             if ( extended ) { result.append( entrant.getSnilsNumber() ).append( ";" ); }
             result.append( entrant.getLastName() ).append( " " )

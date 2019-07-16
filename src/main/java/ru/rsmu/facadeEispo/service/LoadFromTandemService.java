@@ -57,11 +57,15 @@ public class LoadFromTandemService implements ExcelLayout {
             sheet = wb.getSheetAt( 1 );  // requests page
             loadRequests( sheet, entrants );
 
+/*
             sheet = wb.getSheetAt( 3 );   // score request  page
             loadScoreRequests( sheet, entrants );
 
             sheet = wb.getSheetAt( 2 );   // login request  page
             loadLoginRequests( sheet, entrants );
+*/
+            sheet = wb.getSheetAt( 2 );   // login request  page
+            loadRequests( sheet, entrants );
 
         } else {
 
@@ -117,6 +121,7 @@ public class LoadFromTandemService implements ExcelLayout {
             if ( row == null || row.getCell( (short) 0 ) == null ) {
                 break;
             }
+            Long caseNumber = getCellNumber( row, R_CASE_NUMBER );
 
             String firstName = getCellValue( row, R_FIRST_NAME );
             String middleName = getCellValue( row, R_MIDDLE_NAME );
@@ -127,7 +132,10 @@ public class LoadFromTandemService implements ExcelLayout {
             } catch (ParseException e) {
                 birthDate = null;
             }
-            Entrant entrant = findByName( entrants, firstName, middleName, lastName, birthDate );
+            Entrant entrant = findByCaseNumber( entrants, caseNumber );
+            if ( entrant == null ) {
+                entrant = findByName( entrants, firstName, middleName, lastName, birthDate );
+            }
             if ( entrant != null ) {
                 if ( current == null ) {  // new one
                     current = entrant;
@@ -156,8 +164,14 @@ public class LoadFromTandemService implements ExcelLayout {
                         requests.addAll( current.getRequests() );
                     }
                 }
-                Long snils = parseSnils( getCellValue( row, SNILS ) );;
-                if ( entrant.getSnilsNumber() == null ) {
+                Long snils = parseSnils( getCellValue( row, SNILS ) );
+                if ( snils == null ) {
+                    if ( entrant.getCitizenship() == null || StringUtils.isEmpty( entrant.getCitizenship() ) ) {
+                        entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
+                        entrant.setStatus( EntrantStatus.FOREIGNER );
+                    }
+                }
+                else if ( entrant.getSnilsNumber() == null ) {
                     // not yet initialized
                     entrant.setSnilsNumber( snils );
                     entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
@@ -176,6 +190,16 @@ public class LoadFromTandemService implements ExcelLayout {
                 examInfo.setOrganization( getCellValue( row, R_EXAM_ORG ) );
                 examInfo.setType( getCellValue( row, R_EXAM_TYPE ) );
                 examInfo.setYear( getCellValue( row, R_EXAM_YEAR ) );
+                entrant.getExamInfo().setSpeciality( getCellValue( row, R_BASE_SPECIALITY ) );
+                Date scheduledDate;
+                try {
+                    scheduledDate = DATE_FORMAT.parse( getCellValue( row, R_EXAM_DATE ) );
+                } catch (ParseException e) {
+                    scheduledDate = null;
+                }
+                entrant.getExamInfo().setScheduledDate( scheduledDate );
+                entrant.getExamInfo().setAchievements( parseAchievements( getCellValue( row, R_ACHIEVEMENTS ) ) );
+
                 if ( !entrant.getExamInfo().equalsByName( examInfo ) ) {
                     entrant.getExamInfo().update( examInfo );
                     entrant.getExamInfo().setScore( 0 );
@@ -205,12 +229,7 @@ public class LoadFromTandemService implements ExcelLayout {
                     }
                 }
                 else if ( requests.size() > 0 ) {  //existed entrant. remove updated request from the list
-                    for ( Iterator<Request> ir = requests.iterator(); ir.hasNext(); ) {
-                        Request r2 = ir.next();
-                        if ( existedRequest == r2 ) {
-                            ir.remove();
-                        }
-                    }
+                    requests.removeIf( r2 -> existedRequest == r2 );
                 }
 
             } else {
@@ -240,11 +259,20 @@ public class LoadFromTandemService implements ExcelLayout {
         for ( Entrant entrant : entrants ) {
             if ( (firstName != null && firstName.equalsIgnoreCase( entrant.getFirstName() )) &&
                     (middleName != null && middleName.equalsIgnoreCase( entrant.getMiddleName() )) &&
-                    (lastName != null && lastName.equalsIgnoreCase( entrant.getLastName() )) /*||
-                    ( birthDate != null && birthDate.equals( entrant.getBirthDate() ))*/ ) {
+                    (lastName != null && lastName.equalsIgnoreCase( entrant.getLastName() )) &&
+                    ( birthDate != null && birthDate.equals( entrant.getBirthDate() )) ) {
                 return entrant;
             }
 
+        }
+        return null;
+    }
+
+    private Entrant findByCaseNumber( List<Entrant> entrants, Long caseNumber ) {
+        for ( Entrant entrant : entrants ) {
+            if ( entrant.getCaseNumber().equals( caseNumber ) ) {
+                return entrant;
+            }
         }
         return null;
     }
@@ -383,7 +411,9 @@ public class LoadFromTandemService implements ExcelLayout {
     private Long parseSnils( String value ) {
         Long snils = null;
         try {
-            snils = Long.decode( value.replaceAll( "^0+", "" ) );
+            if ( value != null ) {
+                snils = Long.decode( value.replaceAll( "^0+", "" ) );
+            }
         } catch (NumberFormatException e) {
             logger.error( "Wrong snils" );
         }
@@ -517,10 +547,12 @@ public class LoadFromTandemService implements ExcelLayout {
             Entrant entrant = entrantDao.findEntrantByCaseNumber( caseNumb );
             if ( entrant != null && entrant.getExamInfo() != null ) {
                 String specLong = getCellValue( row, SPECIALITY );
-                Matcher matcher = specialityPattern.matcher( specLong );
                 String speciality = "";
-                if ( matcher.find() ) {
-                    speciality = matcher.group();
+                if ( specLong != null ) {
+                    Matcher matcher = specialityPattern.matcher( specLong );
+                    if ( matcher.find() ) {
+                        speciality = matcher.group();
+                    }
                 }
                 String targeting = getCellValue( row, TARGETING );
                 String compensation = getCellValue( row, COMPENSATION_TYPE );
