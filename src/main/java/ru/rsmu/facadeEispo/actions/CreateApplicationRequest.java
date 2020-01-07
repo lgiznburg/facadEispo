@@ -50,7 +50,9 @@ public class CreateApplicationRequest  {
             if ( !request.getEntrant().isValid() ) {
                 continue;
             }
-            if ( request.getStatus() == RequestStatus.RETIRED || request.getStatus() == RequestStatus.TERMINATED ) {
+            if ( request.getStatus() == RequestStatus.RETIRED
+                    || request.getStatus() == RequestStatus.TERMINATED
+                    || request.getStatus() == RequestStatus.CONFIRMED ) {
                 continue;
             }
             result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() ) ).append( ";" );
@@ -191,6 +193,58 @@ public class CreateApplicationRequest  {
 
     }
 
+    @RequestMapping(value = "/createForeignersScoresRequest.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createForeignersScoresCsvRequest(@RequestParam(value = "type",required = false) String type) {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;dateOfBirth;surname;name;patronymic;certNumber;docNumber;testResultType;testResultYear;testResultOrganization;specialty\n" );
+
+        List<Entrant> entrants = entrantDao.findForeignersForScores();
+        for( Entrant entrant : entrants ) {
+            /*if ( !entrant.isValid() ) {
+                continue;
+            }*/
+            if ( "ординатура".equalsIgnoreCase( entrant.getExamInfo().getType() ) ) {
+                continue; //запрошена аккредитация
+            }
+            if ( entrant.getStatus() != EntrantStatus.FOREIGNER ) {  // only FOREIGNERS
+                continue;
+            }
+
+
+            result.append( entrant.getSnilsNumber()!= null ? String.format( "%011d", entrant.getSnilsNumber() ) : "" ).append( ";" )
+                    .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" );
+
+            if ( entrant.getDeception() != null ) {
+                result.append( DATE_FORMAT.format( entrant.getDeception().getBirthDate() ) ).append( ";" );
+            } else {
+                result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+            }
+            if ( entrant.getDeception() != null ) {
+                result.append( entrant.getDeception().getLastName() ).append( ";" )
+                        .append( entrant.getDeception().getFirstName() ).append( ";" )
+                        .append( entrant.getDeception().getMiddleName() ).append( ";" );
+            } else {
+                result.append( entrant.getLastName() ).append( ";" )
+                        .append( entrant.getFirstName() ).append( ";" )
+                        .append( entrant.getMiddleName() ).append( ";" );
+            }
+            result.append(";;");  //doc and cert number
+
+            result.append( entrant.getExamInfo().getType() ).append( ";" )
+                    .append( entrant.getExamInfo().getYear() ).append( ";" )
+                    .append( entrant.getExamInfo().getOrganization() ).append( ";" )
+                    .append( entrant.getExamInfo().getSpeciality() ).append( "\n" );
+
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"entrant_scores_request_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
     @RequestMapping(value = "/createLoginRequest.htm", method = RequestMethod.GET)
     public ResponseEntity<String> createLoginCsvRequest() {
         StringBuilder result = new StringBuilder();
@@ -216,9 +270,10 @@ public class CreateApplicationRequest  {
             boolean rejected = false;
             switch ( entrant.getStatus() ) {
                 case SUBMITTED:
+                    rejected = true;
                     for ( Request request : entrant.getRequests() ) {
-                        if ( request.getStatus() != RequestStatus.CONFIRMED ) {
-                            rejected = true;
+                        if ( request.getStatus() == RequestStatus.CONFIRMED ) {
+                            rejected = false;
                             break;
                         }
                     }

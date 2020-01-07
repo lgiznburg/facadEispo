@@ -113,13 +113,6 @@
     </div>
   </div>
 
-<%--
-  <div class="form-group row">
-    <div class="col">${entrant.examInfo.organization} </div>
-    <div class="col">${entrant.examInfo.type}</div>
-    <div class="col">${entrant.examInfo.year}</div>
-  </div>
---%>
 
   <div class="form-group row">
     <%--<form:label path="examInfo.score" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Баллы</form:label>
@@ -129,6 +122,13 @@
     </div>--%>
       <div class="col-sm-4">Баллы: ${entrant.examInfo.score}</div>
       <div class="col-sm-5">${entrant.examInfo.response}</div>
+  </div>
+  <div class="form-group row">
+      <form:label path="examInfo.achievements" cssClass="col-sm-2 col-form-label" cssErrorClass="col-sm-2 col-form-label text-danger">Достижения</form:label>
+      <div class="col-sm-5">
+        <form:input path="examInfo.achievements"  cssClass="form-control"/>
+        <form:errors path="examInfo.achievements" cssClass="text-danger" element="span"/>
+      </div>
   </div>
 
   <div class="form-group row">

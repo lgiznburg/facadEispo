@@ -8,9 +8,9 @@
 <head>
   <title>Print Errors</title>
 </head>
-<body>
+<body  style="font-size: large">
 
-<table width="800">
+<table width="800" style="font-size: large">
   <thead>
   <tr>
     <th>Дело #</th>
@@ -25,7 +25,8 @@
   <c:forEach items="${entrants}" var="entrant">
     <tr>
       <td>${entrant.caseNumber}</td>
-      <td>${entrant.lastName}<br/> ${entrant.firstName}<br/> ${entrant.middleName}</td>
+      <td>${entrant.lastName}<br/> ${entrant.firstName}<br/> ${entrant.middleName}<br/>
+          <fmt:formatDate value="${entrant.birthDate}" pattern="dd.MM.yyyy"/> </td>
       <td>${entrant.phone}<br>${entrant.email}</td>
       <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
       <td>${entrant.requests[0].response.response}</td>

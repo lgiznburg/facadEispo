@@ -19,6 +19,7 @@ public class LoadApplicationResponseService {
     private static final String HEADER_WITHDRAWAL = "snils;oid;compaignId;specialty;financingType;targetReception;applicationDate;status;errorInfo";
     private static final String HEADER_LOGINS = "snils;oid;specialty;date;login;password;status;errorInfo";
     private static final String HEADER_FINAL_REPORT = "snils;oid;compaignId;specialty;applicationDate;financingType;targetReception;status;errorInfo;finalReport";
+    private static final String HEADER_FOREIGNERS_SCORES = "snils;oid;dateOfBirth;surname;name;patronymic;certNumber;docNumber;testResultType;testResultOrganization;testResultYear;specialty;result;additionalInfo;status;errorInfo";
 
     public enum ResponseType {
         UNDEFINED(""),
@@ -26,7 +27,8 @@ public class LoadApplicationResponseService {
         SCORES( HEADER_SCORES ),
         WITHDRAWAL( HEADER_WITHDRAWAL ),
         LOGINS( HEADER_LOGINS ),
-        FINAL_REPORT( HEADER_FINAL_REPORT )
+        FINAL_REPORT( HEADER_FINAL_REPORT ),
+        FOREIGNERS_SCORES( HEADER_FOREIGNERS_SCORES )
         ;
 
         private String header;
@@ -83,6 +85,9 @@ public class LoadApplicationResponseService {
                 case FINAL_REPORT:
                     parseFinalReport( strLine, entrantMap );
                     break;
+                case FOREIGNERS_SCORES:
+                    parseForeignersScores( strLine, entrantMap );
+                    break;
                 case UNDEFINED:
                     return type;
             }
@@ -90,7 +95,7 @@ public class LoadApplicationResponseService {
         return type;
     }
 
-    public void parseApplication( String strLine, Map<Long,Entrant> entrantMap ) {
+    private void parseApplication( String strLine, Map<Long, Entrant> entrantMap ) {
 
         Entrant entrant = null;
         //Read File Line By Line
@@ -143,7 +148,7 @@ public class LoadApplicationResponseService {
         entrantDao.saveEntity( entrant );
     }
 
-    public void parseScores( String strLine, Map<Long,Entrant> entrantMap ) {
+    private void parseScores( String strLine, Map<Long, Entrant> entrantMap ) {
         Entrant entrant = null;
         String[] cells = strLine.split( ";" );
         if ( cells.length < 8 ) {
@@ -182,7 +187,7 @@ public class LoadApplicationResponseService {
         entrantDao.saveEntity( entrant.getExamInfo() );
     }
 
-    public void parseWithdrawal( String strLine, Map<Long,Entrant> entrantMap ) {
+    private void parseWithdrawal( String strLine, Map<Long, Entrant> entrantMap ) {
         Entrant entrant = null;
         //Read File Line By Line
         String[] cells = strLine.split( ";" );
@@ -235,7 +240,7 @@ public class LoadApplicationResponseService {
         }
     }
 
-    public void parseLogins( String strLine, Map<Long,Entrant> entrantMap ) {
+    private void parseLogins( String strLine, Map<Long, Entrant> entrantMap ) {
         Entrant entrant = null;
         //Read File Line By Line
         String[] cells = strLine.split( ";" );
@@ -277,7 +282,7 @@ public class LoadApplicationResponseService {
         entrantDao.saveEntity( loginInfo );
     }
 
-    public void parseFinalReport( String strLine, Map<Long,Entrant> entrantMap ) {
+    private void parseFinalReport( String strLine, Map<Long, Entrant> entrantMap ) {
         //"snils;oid;compaignId;specialty;applicationDate;financingType;targetReception;status;errorInfo"
         //  0     1    2          3          4                5             6             7       8
         Entrant entrant = null;
@@ -325,5 +330,46 @@ public class LoadApplicationResponseService {
             }
         }
 
+    }
+
+    private void parseForeignersScores( String strLine, Map<Long, Entrant> entrantMap ) {
+        //snils;oid;dateOfBirth;surname;name;patronymic;certNumber;docNumber;testResultType;testResultOrganization;testResultYear;specialty;result;additionalInfo;status;errorInfo
+        //  0    1      2         3       4     5           6         7         8                  9                    10             11     12       13           14     15
+        Entrant entrant = null;
+        String[] cells = strLine.split( ";" );
+        if ( cells.length < 15 ) {
+            return;
+        }
+        Long snils = ServiceUtils.parseSnils( cells[0] );
+        if ( snils == null ) {
+            entrant = entrantDao.findEntrantByName( cells[3], cells[4], cells[5] );
+            if ( entrant == null ) {
+                return;
+            }
+        }
+        else if ( (entrant = entrantMap.get( snils )) == null ) {
+            entrant = entrantDao.findEntrantBySnilsNumber( snils );
+            if ( entrant == null ) {
+                return;
+            }
+            entrantMap.put( snils, entrant );
+        }
+
+        String comment = cells.length >= 16 ? cells[15] : "";
+        Integer score = 0;
+        try {
+            score = Integer.parseInt( cells[12] );
+        } catch (NumberFormatException e) {
+            score = null;
+        }
+
+        if ( cells[14].startsWith( "не" ) ) {
+            entrant.getExamInfo().setScore( null );
+        } else {
+            entrant.getExamInfo().setScore( score );
+        }
+        entrant.getExamInfo().setResponse( comment );
+
+        entrantDao.saveEntity( entrant.getExamInfo() );
     }
 }

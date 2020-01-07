@@ -134,13 +134,29 @@ public class PrintReport {
     public ResponseEntity<String> createCsvLogins() {
         StringBuilder result = new StringBuilder();
         //header
-        result.append( "Номер дела;Логин;Пароль\n" );
+        result.append( "Номер дела;ФИО;Подпись;Логин;Пароль\n" );
 
         List<LoginInfo> loginInfos = entrantDao.findAllLoginInfo( false );
-
-
+        loginInfos.sort( new Comparator<LoginInfo>() {
+            @Override
+            public int compare( LoginInfo o1, LoginInfo o2 ) {
+                int compare1 = o1.getEntrant().getExamInfo().getScheduledDate().compareTo( o2.getEntrant().getExamInfo().getScheduledDate() );
+                return compare1 != 0 ? compare1 : o1.getEntrant().getLastName().compareToIgnoreCase( o2.getEntrant().getLastName() );
+            }
+        } );
+        Date date = new Date();
         for( LoginInfo loginInfo : loginInfos ) {
-            result.append( loginInfo.getEntrant().getCaseNumber() ).append( ";" );
+            Date examDate = loginInfo.getEntrant().getExamInfo().getScheduledDate();
+            if ( !examDate.equals( date ) ) {
+                date = examDate;
+                result.append( "\n" ).append( DATE_FORMAT.format( examDate ) ).append( "\n\n" );
+                result.append( "Номер дела;ФИО;Подпись;Логин;Пароль\n" );
+
+            }
+            result.append( loginInfo.getEntrant().getCaseNumber() ).append( ";" )
+            .append( loginInfo.getEntrant().getLastName() ).append( " " )
+            .append( loginInfo.getEntrant().getFirstName() ).append( " " )
+            .append( loginInfo.getEntrant().getMiddleName() ).append( ";;" );
             if ( loginInfo.isSuccess() ) {
                 result.append( loginInfo.getLogin() ).append( ";" )
                         .append( loginInfo.getPassword() ).append( "\n" );

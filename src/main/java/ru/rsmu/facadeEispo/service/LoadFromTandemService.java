@@ -145,18 +145,7 @@ public class LoadFromTandemService implements ExcelLayout {
                 }
                 if ( current != entrant ) {  // old one and switching to new one
                     if ( current.getId() > 0 && requests.size() > 0 ) {
-                        for ( Request request : requests ) {
-                            switch ( request.getStatus() ) {
-                                case CONFIRMED:
-                                    request.setStatus( RequestStatus.RETIRED );
-                                    break;
-                                case REJECTED:
-                                case NEW:
-                                    request.setStatus( RequestStatus.TERMINATED );
-                                    break;
-                            }
-                        }
-                        entrantDao.saveAllEntities( requests );
+                        finalizeRequests( requests );
                         requests.clear();
                     }
                     current = entrant;
@@ -175,6 +164,9 @@ public class LoadFromTandemService implements ExcelLayout {
                     // not yet initialized
                     entrant.setSnilsNumber( snils );
                     entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
+                    if ( entrant.getCitizenship().length() < 3 ) {
+                        entrant.setCitizenship( "0" + entrant.getCitizenship() );
+                    }
 
                 } else {
                     if ( !snils.equals( entrant.getSnilsNumber() ) ) {
@@ -229,7 +221,7 @@ public class LoadFromTandemService implements ExcelLayout {
                     }
                 }
                 else if ( requests.size() > 0 ) {  //existed entrant. remove updated request from the list
-                    requests.removeIf( r2 -> existedRequest == r2 );
+                    requests.removeIf( r2 -> existedRequest.getId() == r2.getId() );
                 }
 
             } else {
@@ -239,7 +231,14 @@ public class LoadFromTandemService implements ExcelLayout {
             rowN++;
         } while ( true );
         if ( current != null && current.getId() > 0 && requests.size() > 0 ) {
-            for ( Request request : requests ) {
+            finalizeRequests( requests );
+            requests.clear();
+        }
+    }
+
+    private void finalizeRequests( List<Request> requests ) {
+        for ( Request request : requests ) {
+            if ( request.getStatus() != null ) {
                 switch ( request.getStatus() ) {
                     case CONFIRMED:
                         request.setStatus( RequestStatus.RETIRED );
@@ -250,8 +249,20 @@ public class LoadFromTandemService implements ExcelLayout {
                         break;
                 }
             }
-            entrantDao.saveAllEntities( requests );
-            requests.clear();
+        }
+        entrantDao.saveAllEntities( requests );
+        Entrant entrant = entrantDao.findEntity( Entrant.class, requests.get( 0 ).getEntrant().getId() );
+        boolean updated = false;
+        for ( Request request : entrant.getRequests() ) {
+            if ( request.getStatus() != RequestStatus.CONFIRMED && request.getStatus() != RequestStatus.TERMINATED ) {
+                updated = true;
+                break;
+            }
+        }
+        EntrantStatus status = entrant.getStatus();
+        if ( status == EntrantStatus.SUBMITTED && updated ) {
+            entrant.setStatus( EntrantStatus.UPDATED );
+            entrantDao.saveEntity( entrant );
         }
     }
 

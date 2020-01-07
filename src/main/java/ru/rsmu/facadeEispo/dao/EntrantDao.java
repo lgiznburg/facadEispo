@@ -37,6 +37,16 @@ public class EntrantDao extends CommonDao {
         return (Entrant) criteria.uniqueResult();
     }
 
+    public Entrant findEntrantByName( String lastName, String firstName, String middleName ) {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add( Restrictions.eq( "lastName", lastName ) )
+                .add( Restrictions.eq( "firstName", firstName ) )
+                .add( Restrictions.eq( "middleName", middleName ) )
+                .setMaxResults( 1 );
+
+        return (Entrant) criteria.uniqueResult();
+    }
+
     public List<Entrant> findNewEntrants() {
         Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
                 .add( Restrictions.disjunction()
@@ -63,6 +73,15 @@ public class EntrantDao extends CommonDao {
                         .add( Restrictions.eq( "status", EntrantStatus.SUBMITTED ) )
                         .add( Restrictions.eq( "status", EntrantStatus.ENFORCED ) )
                 )
+                .createAlias( "examInfo", "examInfo" )
+                .add( Restrictions.or( Restrictions.eq( "examInfo.score", 0 ), Restrictions.isNull( "examInfo.score" ) ) );
+
+        return criteria.list();
+    }
+
+    public List<Entrant> findForeignersForScores() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add(  Restrictions.eq( "status", EntrantStatus.FOREIGNER ) )
                 .createAlias( "examInfo", "examInfo" )
                 .add( Restrictions.or( Restrictions.eq( "examInfo.score", 0 ), Restrictions.isNull( "examInfo.score" ) ) );
 

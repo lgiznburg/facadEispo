@@ -22,8 +22,8 @@
     <bean id="multipartResolver"
           class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- one of the properties available; the maximum file size in bytes "org.springframework.web.multipart.commons.CommonsMultipartResolver" -->
-        <property name="maxUploadSize" value="2097152" />
-        <!-- 2M -->
+        <property name="maxUploadSize" value="6291456" />
+        <!-- 6M -->
     </bean>
 
     <!-- the interseptor to keep the session open to avoid lazy initialization problems -->

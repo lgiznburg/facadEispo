@@ -72,6 +72,7 @@
             <a class="dropdown-item" href="<c:url value="/createWithdrawalRequest.htm"/>" target="_blank">Отзыв заявлений</a>
             <a class="dropdown-item" href="<c:url value="/createScoresRequest.htm"/>" target="_blank">Запрос баллов аккредитации</a>
             <a class="dropdown-item" href="<c:url value="/createScoresRequest.htm"><c:param name="type" value="test"/></c:url>" target="_blank">Запрос баллов тестирование</a>
+            <a class="dropdown-item" href="<c:url value="/createForeignersScoresRequest.htm"/>" target="_blank">Запрос баллов иностранцев</a>
             <a class="dropdown-item" href="<c:url value="/createLoginRequest.htm"/>" target="_blank">Запрос логинов</a>
             <a class="dropdown-item" href="<c:url value="/createFinalResults.htm"/>" target="_blank">Выгрузка результатов</a>
           </div>

@@ -1,5 +1,6 @@
 package ru.rsmu.facadeEispo.actions;
 
+import org.apache.velocity.tools.generic.DateTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -30,9 +31,18 @@ public class SendNotification {
         List<Entrant> entrants = entrantDao.findEntrantsWithError();
         for ( Entrant entrant : entrants ) {
             if ( StringUtils.isEmpty( entrant.getEmail() ) ) continue;
-            Map<String,Object> model = new HashMap<>();
-            model.put( "user", entrant );
-            emailService.sendEmail( entrant, EmailType.ERROR_NOTIFICATION, model );
+            Map<String, Object> model = new HashMap<>();
+            String errorMsg = entrant.getRequests().get( 0 ).getResponse().getResponse();
+            if ( errorMsg.contains( "поступающего не совпадает" ) ) {
+                // person info errors
+                model.put( "user", entrant );
+                model.put( "df", new DateTool() );
+                emailService.sendEmail( entrant, EmailType.PERSON_INFO_COMPLAIN_NOTIFICATION, model );
+            } else {
+                // errors in request
+                model.put( "user", entrant );
+                emailService.sendEmail( entrant, EmailType.ERROR_NOTIFICATION, model );
+            }
         }
         return "redirect:/home.htm?variant=error";
     }

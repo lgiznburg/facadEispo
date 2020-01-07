@@ -65,7 +65,12 @@
           <tr <c:if test="${not entrant.valid}">class="table-warning"</c:if> >
             <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.caseNumber}</a></td>
             <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</a></td>
-            <td>${entrant.snilsNumber}</td>
+            <td>
+              <c:choose>
+                <c:when test="${not entrant.snilsValid}"><span class="text-danger">${entrant.snilsNumber}</span></c:when>
+                <c:otherwise>${entrant.snilsNumber}</c:otherwise>
+              </c:choose>
+            </td>
             <td>${entrant.examInfo.type}</td>
             <td>${entrant.examInfo.organization}</td>
             <td>${entrant.examInfo.year}</td>
