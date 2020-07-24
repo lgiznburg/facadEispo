@@ -6,6 +6,7 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Cell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -377,14 +378,14 @@ public class LoadFromTandemService implements ExcelLayout {
     }
 
     private String getCellValue( HSSFRow row, short cellN ) {
-        HSSFCell cell = row.getCell( cellN );
+        Cell cell = row.getCell( cellN );
         if ( cell != null ) {
             String value;
             switch ( cell.getCellType() ) {
-                case HSSFCell.CELL_TYPE_STRING:
+                case STRING:
                     value = cell.getRichStringCellValue().getString().trim();
                     break;
-                case HSSFCell.CELL_TYPE_NUMERIC:
+                case NUMERIC:
                     value = Long.toString( Math.round( cell.getNumericCellValue() ) );
                     break;
                 default:
@@ -400,7 +401,7 @@ public class LoadFromTandemService implements ExcelLayout {
         if ( cell != null ) {
             Long value;
             switch ( cell.getCellType() ) {
-                case HSSFCell.CELL_TYPE_NUMERIC:
+                case NUMERIC:
                     value = Math.round( cell.getNumericCellValue() );
                     break;
                 default:

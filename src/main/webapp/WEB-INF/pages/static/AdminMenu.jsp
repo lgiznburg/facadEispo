@@ -29,6 +29,9 @@
       <a class="dropdown-item" href="<c:url value="/createForeignersScoresRequest.htm"/>" target="_blank">Запрос баллов иностранцев</a>
     </div>
   </li>
+  <li class="nav-item">
+    <a class="nav-link <c:if test="${fn:contains(uri, '/mailingToList.htm')}">active</c:if>" href="<c:url value="/mailingToList.htm"/>">Email рассылка</a>
+  </li>
 
   <%--<li class="nav-item">
     <a class="nav-link" href="<c:url value="/createApplicationRequest.htm"/>" target="_blank">Файл заявлений</a>

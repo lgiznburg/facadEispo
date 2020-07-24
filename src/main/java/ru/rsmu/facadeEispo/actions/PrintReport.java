@@ -1,5 +1,10 @@
 package ru.rsmu.facadeEispo.actions;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -9,18 +14,24 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
+import ru.rsmu.facadeEispo.dao.OidDao;
 import ru.rsmu.facadeEispo.model.Entrant;
 import ru.rsmu.facadeEispo.model.LoginInfo;
 import ru.rsmu.facadeEispo.model.StoredPropertyName;
+import ru.rsmu.facadeEispo.model.oid.OrganizationInfo;
 import ru.rsmu.facadeEispo.service.ServiceUtils;
 import ru.rsmu.facadeEispo.service.StoredPropertyService;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author leonid.
@@ -34,6 +45,13 @@ public class PrintReport {
 
     @Autowired
     private StoredPropertyService propertyService;
+
+    private OidDao oidDao;
+
+    @Autowired
+    public void setOidDao( OidDao oidDao ) {
+        this.oidDao = oidDao;
+    }
 
     @RequestMapping(value = "/printErrors.htm")
     public String showPrintError( ModelMap modelMap ) {
@@ -51,49 +69,85 @@ public class PrintReport {
     }
 
     @RequestMapping(value = "/createCsvErrors.htm")
-    public ResponseEntity<String> createCsvRequest() {
-        StringBuilder result = new StringBuilder();
+    public ResponseEntity<byte[]> createCsvRequest() throws IOException {
+
+        Workbook wb = new XSSFWorkbook();
+        Sheet sheet = wb.createSheet( "Ошибки ординаторов");
+        Row header = sheet.createRow( 0 );
         //header
         boolean extended = propertyService.getPropertyAsInt( StoredPropertyName.REPORT_EXTENDED_ERROR_CSV ) > 0;
-        result.append( "Номер дела;" );
-        if ( extended ) { result.append( "СНИЛС;" ); }
-        result.append( "ФИО;" );
-        if ( extended ) { result.append( "Дата рожд.;" ); }
-        result.append( "Данные в РНИМУ;Описание ошибки ЕИСПО\n" );
+
+        int cellN = 0;
+        Cell cell = header.createCell( cellN++ );
+        cell.setCellValue( "Номер дела" );
+        if ( extended ) {
+            cell = header.createCell( cellN++ );
+            cell.setCellValue( "СНИЛС" );
+        }
+        cell = header.createCell( cellN++ );
+        cell.setCellValue( "ФИО" );
+        if ( extended ) {
+            cell = header.createCell( cellN++ );
+            cell.setCellValue( "Дата рожд." );
+        }
+        cell = header.createCell( cellN++ );
+        cell.setCellValue( "Данные в РНИМУ" );
+        cell = header.createCell( cellN++ );
+        cell.setCellValue( "Описание ошибки ЕИСПО" );
 
         List<Entrant> entrants = entrantDao.findEntrantsWithError();
 
-        Collections.sort( entrants, new Comparator<Entrant>() {
+        entrants.sort( new Comparator<Entrant>() {
             @Override
             public int compare( Entrant o1, Entrant o2 ) {
                 return o1.getLastName().compareTo( o2.getLastName() );
             }
         } );
 
+        int rowN = 1;
         for( Entrant entrant : entrants ) {
+            Row row = sheet.createRow( rowN++ );
+            cellN = 0;
+            cell = row.createCell( cellN++ );
+            cell.setCellValue( entrant.getCaseNumber() );
+
+
             String response = entrant.getRequests().get( 0 ).getResponse().getResponse();
             /*if ( response.lastIndexOf( " В заявлении" ) > 0 ) {
                 response = response.substring( 0, response.lastIndexOf( " В заявлении" ) );
                 response += " Есть еще одно заявление в другую организацию с такими же данными";
             }*/
-            result.append( entrant.getCaseNumber() ).append( ";" );
-            if ( extended ) { result.append( entrant.getSnilsNumber() ).append( ";" ); }
+            if ( extended ) {
+                cell = row.createCell( cellN++ );
+                cell.setCellValue( entrant.getSnilsNumber() );
+            }
+            StringBuilder result = new StringBuilder();
             result.append( entrant.getLastName() ).append( " " )
                     .append( entrant.getFirstName() ).append( " " )
-                    .append( entrant.getMiddleName() ).append( ";" );
-            if ( extended ) { result.append( ServiceUtils.DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" ); }
-            result.append( "Тип " ).append( entrant.getExamInfo().getType() )
-                    .append( " Организация " ).append( entrant.getExamInfo().getOrganization() )
-                    .append( " Год " ).append( entrant.getExamInfo().getYear() ).append( ";" )
-                    .append( "\"" ).append( response ).append( "\"\n" );
+                    .append( entrant.getMiddleName() );
+            cell = row.createCell( cellN++ );
+            cell.setCellValue( result.toString() );
+            if ( extended ) {
+                cell = row.createCell( cellN++ );
+                cell.setCellValue( ServiceUtils.DATE_FORMAT.format( entrant.getBirthDate() ) );
+                result.append( ServiceUtils.DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+            }
 
-
+            cell = row.createCell( cellN++ );
+            cell.setCellValue( ServiceUtils.getEntrantInfo( entrant, oidDao ) );
+            cell = row.createCell( cellN++ );
+            cell.setCellValue( ServiceUtils.getReadableErrorInfo( response, oidDao ) );
         }
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
-        String attachment = String.format("attachment; filename=\"entrant_errors_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.setContentType( MediaType.parseMediaType( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ) );
+        String attachment = String.format("attachment; filename=\"entrant_errors_%s.xlsx\"", DATE_FORMAT.format( new Date() ) );
         headers.set( "Content-Disposition", attachment );
-        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+        headers.set("Expires", "0");
+        headers.set("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+        headers.set("Pragma", "public");
+        ByteArrayOutputStream document = new ByteArrayOutputStream();
+        wb.write( document );
+        return new ResponseEntity<byte[]>(document.toByteArray(), headers, HttpStatus.OK );
 
     }
 

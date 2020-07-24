@@ -111,7 +111,7 @@ public class CreateScoresScript extends BaseController {
         if ( cell != null ) {
             Long value;
             switch ( cell.getCellType() ) {
-                case HSSFCell.CELL_TYPE_NUMERIC:
+                case NUMERIC:
                     value = Math.round( cell.getNumericCellValue() );
                     break;
                 default:

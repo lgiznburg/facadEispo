@@ -59,9 +59,9 @@
         <c:set var="uri" value="${pageContext.request.requestURI}"/>
         <%--<sec:authorize access="hasRole('ROLE_ADMIN')">--%>
 
-        <li class="nav-item">
+        <%--<li class="nav-item">
           <a class="nav-link <c:if test="${fn:contains(uri, '/storedProperties.htm')}">active</c:if>" href="<c:url value="/storedProperties.htm"/>">Настройки</a>
-        </li>
+        </li>--%>
         <li class="nav-item">
           <a class="nav-link <c:if test="${fn:contains(uri, '/loadFromTandem.htm')}">active</c:if>" href="<c:url value="/loadFormTandem.htm"/>">Загрузить из Тандема</a>
         </li>
@@ -78,21 +78,16 @@
           </div>
         </li>
 
-        <%--<li class="nav-item">
-          <a class="nav-link" href="<c:url value="/createApplicationRequest.htm"/>" target="_blank">Файл заявлений</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="<c:url value="/createWithdrawalRequest.htm"/>" target="_blank">Отзыв заявлений</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="<c:url value="/createScoresRequest.htm"/>" target="_blank">Запрос баллов аккредитации</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="<c:url value="/createScoresRequest.htm"><c:param name="type" value="test"/></c:url>" target="_blank">Запрос баллов тестирование</a>
-        </li>--%>
-
         <li class="nav-item">
           <a class="nav-link <c:if test="${fn:contains(uri, '/loadApplicationResponse.htm')}">active</c:if>" href="<c:url value="/loadApplicationResponse.htm"/>">Загрузить ответ на заявления</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Управление</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="<c:url value="/storedProperties.htm"/>">Настройки</a>
+            <a class="dropdown-item" href="<c:url value="/mailingToList.htm"/>">Email рассылка</a>
+            <a class="dropdown-item" href="<c:url value="/loadOids.htm"/>" target="_blank">Загрузка OID</a>
+          </div>
         </li>
       </ul>
 

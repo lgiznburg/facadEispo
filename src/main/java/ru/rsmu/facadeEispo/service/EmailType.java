@@ -5,7 +5,8 @@ package ru.rsmu.facadeEispo.service;
  */
 public enum EmailType {
     ERROR_NOTIFICATION( "/emails/ErrorNotification.vm","Информация о проблеме с заявлением в ординатуру"),
-    PERSON_INFO_COMPLAIN_NOTIFICATION( "/emails/PersonInfoNotification.vm","Информация о проблеме с заявлением в ординатуру");
+    PERSON_INFO_COMPLAIN_NOTIFICATION( "/emails/PersonInfoNotification.vm","Информация о проблеме с заявлением в ординатуру"),
+    ADDITIONAL_DOCUMENT_VOLUNTEER("/emails/COVIDachievement.vm", "Требуется дополнительный документ");
 
     private String fileName;
     private String subject;

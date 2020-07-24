@@ -6,9 +6,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.rsmu.facadeEispo.dao.EntrantDao;
+import ru.rsmu.facadeEispo.dao.OidDao;
 import ru.rsmu.facadeEispo.model.Entrant;
 import ru.rsmu.facadeEispo.service.EmailService;
 import ru.rsmu.facadeEispo.service.EmailType;
+import ru.rsmu.facadeEispo.service.ServiceUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,10 +22,10 @@ import java.util.Map;
 @Controller
 public class SendNotification {
 
-    @Autowired
     private EntrantDao entrantDao;
 
-    @Autowired
+    private OidDao oidDao;
+
     private EmailService emailService;
 
     @RequestMapping(value = "/sendNotifications.htm")
@@ -37,13 +39,32 @@ public class SendNotification {
                 // person info errors
                 model.put( "user", entrant );
                 model.put( "df", new DateTool() );
+                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao ) );
+                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao ) );
                 emailService.sendEmail( entrant, EmailType.PERSON_INFO_COMPLAIN_NOTIFICATION, model );
             } else {
                 // errors in request
                 model.put( "user", entrant );
+                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao ) );
+                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao ) );
                 emailService.sendEmail( entrant, EmailType.ERROR_NOTIFICATION, model );
             }
         }
         return "redirect:/home.htm?variant=error";
+    }
+
+    @Autowired
+    public void setEntrantDao( EntrantDao entrantDao ) {
+        this.entrantDao = entrantDao;
+    }
+
+    @Autowired
+    public void setEmailService( EmailService emailService ) {
+        this.emailService = emailService;
+    }
+
+    @Autowired
+    public void setOidDao( OidDao oidDao ) {
+        this.oidDao = oidDao;
     }
 }
