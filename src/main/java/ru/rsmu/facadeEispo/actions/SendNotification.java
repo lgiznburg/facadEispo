@@ -39,14 +39,14 @@ public class SendNotification {
                 // person info errors
                 model.put( "user", entrant );
                 model.put( "df", new DateTool() );
-                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao ) );
-                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao ) );
+                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao, false ) );
+                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao, false ) );
                 emailService.sendEmail( entrant, EmailType.PERSON_INFO_COMPLAIN_NOTIFICATION, model );
             } else {
                 // errors in request
                 model.put( "user", entrant );
-                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao ) );
-                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao ) );
+                model.put( "ourInfo", ServiceUtils.getEntrantInfo( entrant, oidDao, false ) );
+                model.put( "errorInfo", ServiceUtils.getReadableErrorInfo( entrant.getRequests().get( 0 ).getResponse().getResponse(), oidDao, false ) );
                 emailService.sendEmail( entrant, EmailType.ERROR_NOTIFICATION, model );
             }
         }

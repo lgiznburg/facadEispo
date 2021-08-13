@@ -18,10 +18,10 @@ public class OrganizationInfo implements Serializable, Comparable<OrganizationIn
     @GeneratedValue( strategy = GenerationType.IDENTITY )
     private Long id;
 
-    @Column( name = "full_name" )
+    @Column( name = "full_name", columnDefinition = "text" )
     private String fullName;
 
-    @Column( name = "short_name" )
+    @Column( name = "short_name", columnDefinition = "text")
     private String shortName;
 
     @Column( name = "name_change_date" )

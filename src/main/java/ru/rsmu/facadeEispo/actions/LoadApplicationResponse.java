@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import ru.rsmu.facadeEispo.service.LoadApplicationResponseService;
@@ -36,7 +37,8 @@ public class LoadApplicationResponse extends BaseController {
     }
 
     @RequestMapping( method = RequestMethod.POST, params = "response")
-    public String onSubmitPage( HttpServletRequest request, ModelMap model ) {
+    public String onSubmitPage( HttpServletRequest request, ModelMap model,
+                                @RequestParam(value = "finalResponse", required = false) Integer finalResponse) {
         LoadApplicationResponseService.ResponseType type = LoadApplicationResponseService.ResponseType.UNDEFINED;
         try {
             if ( request instanceof MultipartHttpServletRequest ) {
@@ -44,7 +46,8 @@ public class LoadApplicationResponse extends BaseController {
                 if ( multipart.getFileMap().containsKey( "studentsFile" ) && !multipart.getFile( "studentsFile" ).isEmpty() ) {
                     MultipartFile file = multipart.getFile( "studentsFile" );
                     if ( file.getOriginalFilename().matches( ".*\\.csv" ) ) {
-                        type = responseService.loadResponse( file.getInputStream() );
+                        boolean isFinalResponse = finalResponse != null && finalResponse > 0;
+                        type = responseService.loadResponse( file.getInputStream(), isFinalResponse );
                     }
                 }
             }

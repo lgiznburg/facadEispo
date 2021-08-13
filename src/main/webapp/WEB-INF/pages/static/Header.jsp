@@ -75,6 +75,7 @@
             <a class="dropdown-item" href="<c:url value="/createForeignersScoresRequest.htm"/>" target="_blank">Запрос баллов иностранцев</a>
             <a class="dropdown-item" href="<c:url value="/createLoginRequest.htm"/>" target="_blank">Запрос логинов</a>
             <a class="dropdown-item" href="<c:url value="/createFinalResults.htm"/>" target="_blank">Выгрузка результатов</a>
+            <a class="dropdown-item" href="<c:url value="/createExpelResults.htm"/>" target="_blank">Отчисление</a>
           </div>
         </li>
 

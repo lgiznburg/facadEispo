@@ -24,6 +24,7 @@
     </div>
   </c:if>
 
+<%--
   <form action="<c:url value="/mailingToList.htm"/>"  method="post" class="form-inline">
     <fieldset>
     <div  class="form-group row">
@@ -53,5 +54,40 @@
       </div>
     </fieldset>
   </form>
+--%>
+    <form action="<c:url value="/mailingToList.htm"/>"  method="post" class="form-inline"  enctype="multipart/form-data">
+      <fieldset>
+        <input type="hidden" name="fromFile" value="fromFile">
+      <div  class="form-group row">
+        <div class="col-sm-4">
+          <label for="sendToFile">Список номеров дел</label>
+        </div>
+        <div class="col-sm-8">
+          <input id="sendToFile" type="file" name="sendToFile" placeholder="Список номеров дел" class="form-control" style="width: 100%"/>
+        </div>
+      </div>
+        <div  class="form-group row">
+          <div class="col-sm-4">
+            <label for="subjectId">Тема письма</label>
+          </div>
+          <div class="col-sm-8">
+            <input id="subjectId" type="text" name="subject" class="form-control" style="width: 100%">
+          </div>
+        </div>
+        <div  class="form-group row">
+          <div class="col-sm-4">
+            <label for="bodyTemplate">Тело (шаблон) письма</label>
+          </div>
+          <div class="col-sm-8">
+            <textarea id="bodyTemplate" name="bodyTemplate" class="form-control" rows="20" style="width: 100%"></textarea>
+          </div>
+        </div>
+        <div  class="form-group row">
+          <div class="col-sm-8 offset-4">
+            <input type="submit" value="Отправить письма" class="btn btn-primary"/>
+          </div>
+        </div>
+      </fieldset>
+    </form>
 
 </div>

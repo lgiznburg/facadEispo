@@ -21,6 +21,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author leonid.
@@ -47,12 +49,14 @@ public class CreateApplicationRequest  {
 
         List<Request> requests = requestDao.findRequestsForExport();
         for( Request request : requests ) {
-            if ( !request.getEntrant().isValid() ) {
+            if ( request.getEntrant().getStatus() == EntrantStatus.FOREIGNER || !request.getEntrant().isValid() ) {
                 continue;
             }
             if ( request.getStatus() == RequestStatus.RETIRED
                     || request.getStatus() == RequestStatus.TERMINATED
-                    || request.getStatus() == RequestStatus.CONFIRMED ) {
+                    || request.getStatus() == RequestStatus.CONFIRMED
+                    || request.getStatus() == RequestStatus.REFRESHING
+            ) {
                 continue;
             }
             result.append( String.format( "%011d", request.getEntrant().getSnilsNumber() ) ).append( ";" );
@@ -204,9 +208,9 @@ public class CreateApplicationRequest  {
             /*if ( !entrant.isValid() ) {
                 continue;
             }*/
-            if ( "ординатура".equalsIgnoreCase( entrant.getExamInfo().getType() ) ) {
+            /*if ( "ординатура".equalsIgnoreCase( entrant.getExamInfo().getType() ) ) {
                 continue; //запрошена аккредитация
-            }
+            }*/
             if ( entrant.getStatus() != EntrantStatus.FOREIGNER ) {  // only FOREIGNERS
                 continue;
             }
@@ -343,9 +347,12 @@ public class CreateApplicationRequest  {
                         .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" );
 
                 if ( forceStatus != 4 ) {
+/*
                     result.append( entrant.getExamInfo().getTotalScore() ).append( ";" )
                             .append( entrant.getExamInfo().getScore() == null ? 0 : entrant.getExamInfo().getScore() ).append( ";" )
-                            .append( entrant.getExamInfo().getAchievements().replace( "г1", "г" ) ).append( ";" );
+                            .append( entrant.getExamInfo().getAchievements() ).append( ";" );
+*/
+                    fakeExtraAchievement( result, entrant.getExamInfo() );
                 } else {
                     result.append( "0;;;" );
                 }
@@ -385,6 +392,83 @@ public class CreateApplicationRequest  {
         String attachment = String.format("attachment; filename=\"enrollment_results_%s.csv\"", DATE_FORMAT.format( new Date() ) );
         headers.set( "Content-Disposition", attachment );
         return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+    @RequestMapping(value = "/createExpelResults.htm", method = RequestMethod.GET)
+    public ResponseEntity<String> createExpelResults() {
+        StringBuilder result = new StringBuilder();
+        //header
+        result.append( "snils;oid;compaignId;dateOfBirth;specialty;financingType;targetReception;applicationDate;amountScore;testResult;individualAchievements;applicationStatus;admissionOrderNumber;admissionOrderDate;regulationsParagraph;diplomaIssueDate;diplomaSpecialty\n" );
+
+        List<Entrant> entrants = entrantDao.findExpels();
+        for( Entrant entrant : entrants ) {
+            if ( entrant.getStatus() == EntrantStatus.EXPELLED && entrant.isEnrollment() ) {
+
+                for ( Request request : entrant.getRequests() ) {
+                    if ( !request.isEnrollment() ) {
+                        continue;
+                    }
+
+                    EnrollmentResponse enrollmentResponse = request.getEnrollmentResponse();
+
+                    result.append( String.format( "%011d", entrant.getSnilsNumber() ) ).append( ";" )
+                            .append( propertyService.getProperty( StoredPropertyName.SYSTEM_OID ) ).append( ";" )
+                            .append( propertyService.getProperty( StoredPropertyName.SYSTEM_CAMPAIGN_ID ) ).append( ";" );
+
+                    result.append( DATE_FORMAT.format( entrant.getBirthDate() ) ).append( ";" );
+
+                    result.append( request.getSpeciality() ).append( ";" )
+                            .append( request.getFinancing() ).append( ";" )
+                            .append( request.getTargetRequest() ).append( ";" )
+                            .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" );
+
+                    fakeExtraAchievement( result, entrant.getExamInfo() );
+
+                    result.append( "5;" )
+                            /*.append( request.getEnrollmentOrder() )*/.append( ";" )
+                            /*.append( DATE_FORMAT.format( request.getEnrollmentOrderDate() ) )*/.append( ";" );
+                    if ( !entrant.getCitizenship().equals( "643" ) ) {
+                        if ( enrollmentResponse != null && enrollmentResponse.getResponse().equals( "Неверно указан пункт порядка приема" ) ) {
+                            result.append( "63" );
+                        } else {
+                            result.append( "66" );
+                        }
+                    }
+                    result.append( ";" )
+                            .append( entrant.getDiplomaIssueDate() != null ? DATE_FORMAT.format( entrant.getDiplomaIssueDate() ) : "" ).append( ";" )
+                            .append( entrant.getExamInfo().getSpeciality() ).append( "\n" );
+                }
+
+            }
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType( MediaType.parseMediaType( "text/csv; charset=utf-8" ) );
+        String attachment = String.format("attachment; filename=\"expel_results_%s.csv\"", DATE_FORMAT.format( new Date() ) );
+        headers.set( "Content-Disposition", attachment );
+        return new ResponseEntity<String>(result.toString(), headers, HttpStatus.OK );
+
+    }
+
+    private void fakeExtraAchievement( StringBuilder result, ExamInfo examInfo ) {
+
+        int fakeFinalScore = examInfo.getTotalScore();
+        String fakeAchievement = examInfo.getAchievements();
+
+        Pattern pattern = Pattern.compile( "з-(\\d)" );
+        Matcher matcher = pattern.matcher(  examInfo.getAchievements() );
+        if ( matcher.find() ) {
+            String match = matcher.group();
+            String score = matcher.group(1);
+            int extraScore = Integer.parseInt( score );
+            if ( extraScore < 5 ) {
+                fakeFinalScore = examInfo.getTotalScore() + 5 - extraScore;
+                fakeAchievement = examInfo.getAchievements().replace( match, "з-5" );
+            }
+        }
+        result.append( fakeFinalScore ).append( ";" )
+                .append( examInfo.getScore() == null ? 0 : examInfo.getScore() ).append( ";" )
+                .append( fakeAchievement ).append( ";" );
 
     }
 

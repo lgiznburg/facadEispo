@@ -29,7 +29,7 @@
           <fmt:formatDate value="${entrant.birthDate}" pattern="dd.MM.yyyy"/> </td>
       <td>${entrant.phone}<br>${entrant.email}</td>
       <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
-      <td>${entrant.requests[0].response.response}</td>
+      <td>${entrant.errorInfo}</td>
     </tr>
   </c:forEach>
   </tbody>

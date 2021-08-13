@@ -101,7 +101,7 @@ public class ServiceUtils {
         return null;
     }
 
-    public static String getEntrantInfo( Entrant entrant, OidDao oidDao ) {
+    public static String getEntrantInfo( Entrant entrant, OidDao oidDao, boolean shortName ) {
         OrganizationInfo orgForUs = oidDao.getOrgInfo( entrant.getExamInfo().getOrganization() );
 
         String readableType = entrant.getExamInfo().getType().replaceAll( "ординатура", "тестирование (ординатура)" );
@@ -109,19 +109,19 @@ public class ServiceUtils {
 
         StringBuilder result = new StringBuilder();
         result.append( "Тип: " ).append( readableType )
-                .append( ", Организация: " ).append( orgForUs.getShortName() )
+                .append( ", Организация: " ).append( shortName ? orgForUs.getShortName() : orgForUs.getFullName() )
                 .append( ", Год: " ).append( entrant.getExamInfo().getYear() );
         return result.toString();
     }
 
-    public static String getReadableErrorInfo( String errorInfo, OidDao oidDao ) {
+    public static String getReadableErrorInfo( String errorInfo, OidDao oidDao, boolean shortName ) {
         String response = errorInfo;
         Pattern pattern = Pattern.compile( "(\\d+\\.)+\\d+" );
         Matcher matcher = pattern.matcher( response );
         while ( matcher.find() ) {
             OrganizationInfo orgForThem = oidDao.getOrgInfo( matcher.group() );
             if ( orgForThem != null ) {
-                response = response.replaceAll( matcher.group(), orgForThem.getShortName() );
+                response = response.replaceAll( matcher.group(), "\"" + (shortName ? orgForThem.getShortName() : orgForThem.getFullName()) + "\"" );
             }
         }
         response = response.replaceAll( "ординатура", "тестирование (ординатура)" );

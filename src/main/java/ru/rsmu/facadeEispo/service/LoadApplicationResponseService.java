@@ -54,7 +54,7 @@ public class LoadApplicationResponseService {
     @Autowired
     private EntrantDao entrantDao;
 
-    public ResponseType loadResponse( InputStream fileInputStream ) throws IOException {
+    public ResponseType loadResponse( InputStream fileInputStream, boolean isFinalResponse ) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(fileInputStream));
 
         Map<Long,Entrant> entrantMap = new HashMap<>();
@@ -70,7 +70,11 @@ public class LoadApplicationResponseService {
             }
             switch ( type ) {
                 case APPLICATION:
-                    parseApplication( strLine, entrantMap );
+                    if ( isFinalResponse ) {
+                        parseFinalReport( strLine, entrantMap );
+                    } else {
+                        parseApplication( strLine, entrantMap );
+                    }
                     break;
                 case SCORES:
                     parseScores( strLine, entrantMap );
@@ -216,7 +220,12 @@ public class LoadApplicationResponseService {
             if ( request.equalsByName( r1 ) ) {
 
                 if ( !cells[7].startsWith( "не" ) ) {
-                    request.setStatus( RequestStatus.TERMINATED );
+                    if ( request.getStatus() == RequestStatus.RETIRED ) {
+                        request.setStatus( RequestStatus.TERMINATED );
+                    }
+                    else if ( request.getStatus() == RequestStatus.REFRESHING ) {
+                        request.setStatus( RequestStatus.NEW );
+                    }
                 }
                 entrantDao.saveEntity( request );
             }

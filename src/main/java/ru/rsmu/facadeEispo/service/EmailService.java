@@ -17,6 +17,7 @@ import ru.rsmu.facadeEispo.model.StoredPropertyName;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,18 @@ public class EmailService {
         }
     }
 
+    public void sendEmail( Entrant entrant, String subject, String bodyTemplate, Map<String,Object> model ) throws EmailException {
+        //try {
+
+            HtmlEmail email = createHtmlEmail( subject, bodyTemplate, model );
+            email.addTo( entrant.getEmail(), String.format( "%s %s %s", entrant.getLastName(), entrant.getFirstName(), entrant.getMiddleName() ) );
+            email.send();
+
+        /*} catch (EmailException e) {
+            log.error( "Email wasn't sent", e );
+        }*/
+    }
+
     public void sendEmail( String to, EmailType emailType, Map<String,Object> model ) {
         try {
 
@@ -80,8 +93,7 @@ public class EmailService {
         }
     }
 
-
-    private HtmlEmail createHtmlEmail( EmailType emailType, Map<String,Object> model) throws EmailException {
+    private HtmlEmail prepareHtmlEmail() throws EmailException {
         final HtmlEmail htmlEmail = new HtmlEmail();
         htmlEmail.setHostName(hostName);
         if ( !StringUtils.isEmpty( hostLogin ) && !StringUtils.isEmpty( hostPassword )) {
@@ -105,9 +117,23 @@ public class EmailService {
         } catch (AddressException e) {
             // what?
         }
+        return htmlEmail;
+    }
+
+    private HtmlEmail createHtmlEmail( EmailType emailType, Map<String,Object> model) throws EmailException {
+        final HtmlEmail htmlEmail = prepareHtmlEmail();
 
         htmlEmail.setSubject( emailType.getSubject() );
         htmlEmail.setHtmlMsg( generateEmailMessage( emailType.getFileName(), model ) );
+
+        return htmlEmail;
+    }
+
+    private HtmlEmail createHtmlEmail( String subject, String bodyTemplate, Map<String, Object> model ) throws EmailException {
+        final HtmlEmail htmlEmail = prepareHtmlEmail();
+
+        htmlEmail.setSubject( subject );
+        htmlEmail.setHtmlMsg( generateEmailMessage( bodyTemplate, model ) );
 
         return htmlEmail;
     }
@@ -120,7 +146,14 @@ public class EmailService {
             final ToolContext toolContext = toolManager.createContext();
             final VelocityContext context = new VelocityContext(model, toolContext);
 
-            velocityEngine.mergeTemplate( template, "UTF-8", context, message );
+            if ( template.matches( ".*\\.vm$" ) ) { // this is template file name
+                velocityEngine.mergeTemplate( template, "UTF-8", context, message );
+            }
+            else { //this is just text
+                final StringReader reader = new StringReader(template);
+                velocityEngine.evaluate( context, message, "Evaluate email tag", reader );
+            }
+
             return message.getBuffer().toString();
 
         } catch (Exception e) {

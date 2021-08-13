@@ -27,6 +27,14 @@
     </div>
     <div  class="form-group row">
       <div class="col-5">
+        <label>
+          <span>Response for final results upload:</span>
+          <input type="checkbox" name="finalResponse" class="form-check-input" value="1"/>
+        </label>
+      </div>
+    </div>
+    <div  class="form-group row">
+      <div class="col-5">
         <input type="submit" value="Submit" class="btn btn-primary"/>
       </div>
     </div>

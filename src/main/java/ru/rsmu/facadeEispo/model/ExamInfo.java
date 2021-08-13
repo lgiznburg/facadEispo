@@ -5,6 +5,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author leonid.
@@ -168,5 +169,18 @@ public class ExamInfo implements Serializable {
     public boolean isValid() {
         return !StringUtils.isEmpty( type ) && !StringUtils.isEmpty( year ) && !StringUtils.isEmpty( organization )
                 && organization.matches( "1\\.2\\.643\\.5\\.1\\.13\\.13\\.12\\.4(\\.\\d+){2}" );
+    }
+
+    @Override
+    public boolean equals( Object o ) {
+        if ( this == o ) return true;
+        if ( !(o instanceof ExamInfo) ) return false;
+        ExamInfo examInfo = (ExamInfo) o;
+        return id == examInfo.id && entrant.equals( examInfo.entrant ) && Objects.equals( speciality, examInfo.speciality ) && Objects.equals( type, examInfo.type ) && Objects.equals( organization, examInfo.organization ) && Objects.equals( year, examInfo.year ) && Objects.equals( score, examInfo.score ) && Objects.equals( response, examInfo.response ) && Objects.equals( scheduledDate, examInfo.scheduledDate ) && Objects.equals( totalScore, examInfo.totalScore ) && Objects.equals( achievements, examInfo.achievements );
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash( id, entrant, speciality, type, organization, year, score, response, scheduledDate, totalScore, achievements );
     }
 }

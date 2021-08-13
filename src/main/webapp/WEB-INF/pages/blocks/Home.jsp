@@ -13,6 +13,7 @@
     <c:when test="${showType eq 'search'}"><c:set var="activeSearch" value="active"/></c:when>
     <c:when test="${showType eq 'scores'}"><c:set var="activeScores" value="active"/></c:when>
     <c:when test="${showType eq 'final'}"><c:set var="activeFinal" value="active"/></c:when>
+    <c:when test="${showType eq 'foreigner'}"><c:set var="activeForeigner" value="active"/></c:when>
   </c:choose>
 
   <ul class="nav nav-tabs">
@@ -30,6 +31,9 @@
     </li>
     <li class="nav-item">
       <a class="nav-link ${activeFinal}" href="<c:url value="/home.htm"><c:param name="variant" value="final"/></c:url>" >Финальные ошибки</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link ${activeForeigner}" href="<c:url value="/home.htm"><c:param name="variant" value="foreigner"/></c:url>" >Иностранцы</a>
     </li>
   </ul>
 
@@ -106,7 +110,7 @@
               <br><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.caseNumber}</a></td>
             <td>${entrant.phone} <br>${entrant.email}</td>
             <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
-            <td>${entrant.requests[0].response.response}</td>
+            <td>${entrant.errorInfo}</td>
           </tr>
         </c:forEach>
         </tbody>
@@ -208,12 +212,50 @@
             <td>${entrant.status}</td>
             <td>${entrant.examInfo.type}, ${entrant.examInfo.year}, ${entrant.examInfo.organization}</td>
             <td>${entrant.examInfo.totalScore} - ${entrant.examInfo.score}</td>
-            <td>${entrant.requests[0].enrollmentResponse.response}</td>
+            <td>
+              <c:forEach var="reque" items="${entrant.requests}">
+                <c:if test="${not empty reque.enrollmentResponse and not reque.enrollmentResponse.success}">   <%-- --%>
+                  <p>${reque.enrollmentResponse.response}</p>
+                </c:if>
+              </c:forEach>
+            </td>
           </tr>
         </c:forEach>
         </tbody>
       </table>
+    </c:when>
 
+    <c:when test="${showType eq 'foreigner'}">
+      <table class="table table-hover">
+        <thead>
+        <tr>
+          <th>Case #</th>
+          <th>Name</th>
+          <th>СНИЛС</th>
+          <th>Test type</th>
+          <th>OID</th>
+          <th>Year</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <c:forEach items="${entrants}" var="entrant">
+          <tr <c:if test="${entrant.budgetOrRussian}">class="table-warning"</c:if> >
+            <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.caseNumber}</a></td>
+            <td><a href="<c:url value="/editEntrant.htm"><c:param name="id" value="${entrant.id}"/></c:url>">${entrant.lastName} ${entrant.firstName} ${entrant.middleName}</a></td>
+            <td>
+              <c:choose>
+                <c:when test="${not entrant.snilsValid}"><span class="text-danger">${entrant.snilsNumber}</span></c:when>
+                <c:otherwise>${entrant.snilsNumber}</c:otherwise>
+              </c:choose>
+            </td>
+            <td>${entrant.examInfo.type}</td>
+            <td>${entrant.examInfo.organization}</td>
+            <td>${entrant.examInfo.year}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
     </c:when>
 
   </c:choose>

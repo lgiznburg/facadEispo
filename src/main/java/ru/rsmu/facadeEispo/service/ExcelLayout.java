@@ -30,6 +30,7 @@ public interface ExcelLayout {
     short R_EXAM_DATE = 16;
     short R_ACHIEVEMENTS = 17;
     short R_CASE_NUMBER = 18;
+    short R_REQUEST_STATUS = 19;
 
     short SC_SNILS = 0;
     short SC_SPECIALITY = 6;

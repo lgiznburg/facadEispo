@@ -52,6 +52,8 @@ public class Home extends BaseController{
             entrants = entrantDao.findScoresErrors();
         } else if ( variant.equalsIgnoreCase( "final" ) ) {
             entrants = entrantDao.findFinalErrors();
+        } else if ( variant.equalsIgnoreCase( "foreigner" ) ) {
+            entrants = entrantDao.findForeigners();
         }
         if ( entrants == null ) {
             entrants = entrantDao.findNewEntrants();
@@ -80,6 +82,9 @@ public class Home extends BaseController{
             }
             if ( variant.equalsIgnoreCase( "final" ) ) {
                 return "final";
+            }
+            if ( variant.equalsIgnoreCase( "foreigner" ) ) {
+                return "foreigner";
             }
         }
         return "new";

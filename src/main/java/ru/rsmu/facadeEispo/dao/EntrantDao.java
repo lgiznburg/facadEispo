@@ -88,6 +88,13 @@ public class EntrantDao extends CommonDao {
         return criteria.list();
     }
 
+    public List<Entrant> findForeigners() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add(  Restrictions.eq( "status", EntrantStatus.FOREIGNER ) );
+
+        return criteria.list();
+    }
+
     public List<Entrant> findEntrantsWithScore() {
         Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
                 .add( Restrictions.or( Restrictions.eq( "status", EntrantStatus.SUBMITTED ), Restrictions.eq( "status", EntrantStatus.ENFORCED ) ) )
@@ -171,6 +178,18 @@ public class EntrantDao extends CommonDao {
                 .createAlias("requests.enrollmentResponse", "enrollmentResponse",
                         Criteria.LEFT_JOIN,
                         Restrictions.eq( "enrollmentResponse.success", false ) )
+                .setResultTransformer( Criteria.DISTINCT_ROOT_ENTITY );
+
+        return criteria.list();
+    }
+
+    public List<Entrant> findExpels() {
+        Criteria criteria = getSessionFactory().getCurrentSession().createCriteria( Entrant.class )
+                .add(  Restrictions.eq( "status", EntrantStatus.EXPELLED ) )
+                .createAlias( "requests", "requests" )
+                .createAlias("requests.enrollmentResponse", "enrollmentResponse",
+                        Criteria.LEFT_JOIN,
+                        Restrictions.eq( "enrollmentResponse.success", true ) )
                 .setResultTransformer( Criteria.DISTINCT_ROOT_ENTITY );
 
         return criteria.list();

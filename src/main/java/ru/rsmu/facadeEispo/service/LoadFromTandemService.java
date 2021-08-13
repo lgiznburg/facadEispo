@@ -1,12 +1,12 @@
 package ru.rsmu.facadeEispo.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class LoadFromTandemService implements ExcelLayout {
     protected static final DateFormat YEAR_FORMAT = new SimpleDateFormat( "yyyy" );
     protected static final Locale RU_LOCALE = Locale.forLanguageTag( "ru_RU" );
 
-    protected static final Pattern achievementsPattern = Pattern.compile( "\\d\\. ([^ ]+) . (\\d{2})" );
+    protected static final Pattern achievementsPattern = Pattern.compile( "\\d\\. ([^ ]+) . (\\d{1,3})" );
     protected static final Pattern specialityPattern = Pattern.compile( "\\d{2}\\.\\d{2}\\.\\d{2}" );
 
     @Autowired
@@ -56,7 +56,7 @@ public class LoadFromTandemService implements ExcelLayout {
             loadCommonInfo( sheet, entrants );
 
             sheet = wb.getSheetAt( 1 );  // requests page
-            loadRequests( sheet, entrants );
+            loadRequests( sheet, entrants, false );
 
 /*
             sheet = wb.getSheetAt( 3 );   // score request  page
@@ -65,8 +65,8 @@ public class LoadFromTandemService implements ExcelLayout {
             sheet = wb.getSheetAt( 2 );   // login request  page
             loadLoginRequests( sheet, entrants );
 */
-            sheet = wb.getSheetAt( 2 );   // login request  page
-            loadRequests( sheet, entrants );
+            sheet = wb.getSheetAt( 2 );   // foreign request  page
+            loadRequests( sheet, entrants, true );
 
         } else {
 
@@ -110,7 +110,7 @@ public class LoadFromTandemService implements ExcelLayout {
         return null;
     }
 
-    private void loadRequests( HSSFSheet sheet, List<Entrant> entrants ) {
+    private void loadRequests( HSSFSheet sheet, List<Entrant> entrants, boolean foreigners ) {
         int rowN = 1;  // skip header
 
         List<Request> requests = new ArrayList<>();
@@ -155,24 +155,28 @@ public class LoadFromTandemService implements ExcelLayout {
                     }
                 }
                 Long snils = parseSnils( getCellValue( row, SNILS ) );
-                if ( snils == null ) {
+                if ( snils == null || foreigners) {
                     if ( entrant.getCitizenship() == null || StringUtils.isEmpty( entrant.getCitizenship() ) ) {
                         entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
-                        entrant.setStatus( EntrantStatus.FOREIGNER );
                     }
+                    entrant.setStatus( EntrantStatus.FOREIGNER );
                 }
                 else if ( entrant.getSnilsNumber() == null ) {
-                    // not yet initialized
+                    // not yet initialized or updated
                     entrant.setSnilsNumber( snils );
                     entrant.setCitizenship( getCellValue( row, R_CITIZENSHIP ) );
                     if ( entrant.getCitizenship().length() < 3 ) {
                         entrant.setCitizenship( "0" + entrant.getCitizenship() );
+                    }
+                    if ( entrant.getStatus() ==  EntrantStatus.FOREIGNER ) {
+                        entrant.setStatus( EntrantStatus.UPDATED );
                     }
 
                 } else {
                     if ( !snils.equals( entrant.getSnilsNumber() ) ) {
                         entrant.setSnilsNumber( snils );
                         if ( entrant.getStatus() == EntrantStatus.SUBMITTED) {
+                            // если он передан, вероятно его надо отозвать и переподать
                             entrant.setStatus( EntrantStatus.UPDATED );
                         }
                     }
@@ -199,6 +203,14 @@ public class LoadFromTandemService implements ExcelLayout {
                     entrant.getExamInfo().setResponse( "" );
                     if ( entrant.getStatus() == EntrantStatus.SUBMITTED ) {
                         entrant.setStatus( EntrantStatus.UPDATED );
+                        entrant.getRequests().forEach( re -> {
+                            if ( re.getStatus() == RequestStatus.CONFIRMED ) {
+                                re.setStatus( RequestStatus.REFRESHING );
+                            }
+                            else if ( re.getStatus() == RequestStatus.REJECTED ) {
+                                re.setStatus( RequestStatus.NEW );
+                            }
+                        } );
                     }
                 }
 
@@ -222,6 +234,22 @@ public class LoadFromTandemService implements ExcelLayout {
                     }
                 }
                 else if ( requests.size() > 0 ) {  //existed entrant. remove updated request from the list
+                    String requestState = getCellValue( row, R_REQUEST_STATUS );
+                    if ( "0".equals( requestState ) ) {  // забор документов
+                       switch ( existedRequest.getStatus() ) {
+                           case CONFIRMED:
+                           case REFRESHING:
+                               existedRequest.setStatus( RequestStatus.RETIRED );
+                               entrant.setStatus( EntrantStatus.UPDATED );
+                               break;
+                           case NEW:
+                           case REJECTED:
+                               existedRequest.setStatus( RequestStatus.TERMINATED );
+                               break;
+                       }
+                    }
+                        /*    && existedRequest.getStatus() == RequestStatus.CONFIRMED ) {
+                    }*/
                     requests.removeIf( r2 -> existedRequest.getId() == r2.getId() );
                 }
 
@@ -242,6 +270,7 @@ public class LoadFromTandemService implements ExcelLayout {
             if ( request.getStatus() != null ) {
                 switch ( request.getStatus() ) {
                     case CONFIRMED:
+                    case REFRESHING:
                         request.setStatus( RequestStatus.RETIRED );
                         break;
                     case REJECTED:
@@ -377,7 +406,7 @@ public class LoadFromTandemService implements ExcelLayout {
         } while ( true );
     }
 
-    private String getCellValue( HSSFRow row, short cellN ) {
+    private String getCellValue( Row row, short cellN ) {
         Cell cell = row.getCell( cellN );
         if ( cell != null ) {
             String value;
@@ -396,8 +425,8 @@ public class LoadFromTandemService implements ExcelLayout {
         return null;
     }
 
-    private Long getCellNumber( HSSFRow row, short cellN ) {
-        HSSFCell cell = row.getCell( cellN );
+    private Long getCellNumber( Row row, short cellN ) {
+        Cell cell = row.getCell( cellN );
         if ( cell != null ) {
             Long value;
             switch ( cell.getCellType() ) {
@@ -484,13 +513,13 @@ public class LoadFromTandemService implements ExcelLayout {
 
         HSSFSheet sheet = wb.getSheetAt( 0 );  // main page
 
-        int rowN = 1;  // skip header
+        Iterator<Row> rowIt = sheet.rowIterator();
 
-        do {
-            HSSFRow row = sheet.getRow( rowN );
+        while ( rowIt.hasNext() ){
+            Row row = rowIt.next();
             // check if row is valid
-            if ( row == null || row.getCell( (short) 0 ) == null ) {
-                break;
+            if ( row.getCell( A_CASE ) == null ) {
+                continue;
             }
 
             Long caseNumb = parseSnils( getCellValue( row, A_CASE ) );  //parse long value
@@ -503,8 +532,7 @@ public class LoadFromTandemService implements ExcelLayout {
                 logger.error( "Can't find entrant by case number" );
             }
 
-            rowN++;
-        } while ( true );
+        }
 
         saveAllEntities( entrants );
     }
@@ -516,22 +544,38 @@ public class LoadFromTandemService implements ExcelLayout {
             while ( matcher.find() ) {
                 String name = matcher.group(1);
                 String score = matcher.group(2);
-                String orderCode = "г";
+                String orderCode = "";
                 if ( name.contains( "СтпРФ" ) ) {
                     orderCode = "а";
                 } else if ( name.contains( "Отл" ) ) {
                     orderCode = "б";
+                } else if ( name.contains( "Статья" ) ) {
+                    orderCode = "в";
                 } else if ( name.contains( "СтжСПО" ) ) {
-                    orderCode = "в1";
-                } else if ( name.contains( "СтжВО" ) ) {
-                    orderCode = "в2";
-                } else if ( name.contains( "Вол" ) ) {
                     orderCode = "г1";
+                } else if ( name.contains( "СтжВО1" ) ) {
+                    orderCode = "г2";
+                } else if ( name.contains( "СтжВО2++" ) ) {
+                    orderCode = "г3";
+                } else if ( name.contains( "СтжСел" ) ) {
+                    orderCode = "д";
+                } else if ( name.contains( "ВСО\"Я-проф\"" ) ) {
+                    orderCode = "е";
+                } else if ( name.contains( "Вол." ) ) {
+                    orderCode = "ж";
+                } else if ( name.contains( "Иные" ) ) {
+                    orderCode = "з";
+                } else if ( name.contains( "ВолCOVID" ) ) {
+                    orderCode = "21а";
+                } else if ( name.contains( "СтжCOVID" ) ) {
+                    orderCode = "21б";
                 }
-                if ( builder.length() > 0  ) {
-                    builder.append( "," );
+                if ( orderCode.length() > 0 ) {
+                    if ( builder.length() > 0  ) {
+                        builder.append( "," );
+                    }
+                    builder.append( orderCode ).append( "-" ).append( score );
                 }
-                builder.append( orderCode ).append( "-" ).append( score );
             }
             return builder.toString();
         }

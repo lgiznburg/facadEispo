@@ -246,6 +246,9 @@ public class Entrant implements Serializable {
     }
 
     public boolean isSnilsValid() {
+        if ( snilsNumber == null ) {
+            return false;
+        }
         long numbers = snilsNumber / 100;
         if ( numbers <= 1001998L ) return true;
 
@@ -254,10 +257,28 @@ public class Entrant implements Serializable {
         String strCheckSum = strSnils.substring( 9 );
         long calculation = 0;
         for ( int i = 0; i < 9; i++ ) {
-            calculation += ( 9 - i ) * Long.valueOf( Character.toString(strNumbers.charAt( i )) );
+            calculation += ( 9 - i ) * Long.parseLong( Character.toString(strNumbers.charAt( i )) );
         }
         calculation = calculation % 101;
         calculation = calculation < 100 ? calculation : 0;
         return strCheckSum.equals( String.format( "%02d", calculation ) );
+    }
+
+    public boolean isBudgetOrRussian() {
+        if ( citizenship.equals( "643" ) ) {
+            return true;
+        }
+        for ( Request request : requests ) {
+            if ( request.getFinancing().equals( "бюджет" ) ) return true;
+        }
+        return false;
+    }
+
+    @Transient
+    public String getErrorInfo() {
+        Request request  = requests.stream().filter( re -> !re.getResponse().isSuccess() )
+                .findAny()
+                .orElse( null );
+        return request != null ? request.getResponse().getResponse() : "";
     }
 }

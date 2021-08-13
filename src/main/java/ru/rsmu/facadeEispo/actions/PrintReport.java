@@ -82,7 +82,8 @@ public class PrintReport {
         cell.setCellValue( "Номер дела" );
         if ( extended ) {
             cell = header.createCell( cellN++ );
-            cell.setCellValue( "СНИЛС" );
+            //cell.setCellValue( "СНИЛС" );
+            cell.setCellValue( "Тел." );
         }
         cell = header.createCell( cellN++ );
         cell.setCellValue( "ФИО" );
@@ -112,14 +113,11 @@ public class PrintReport {
             cell.setCellValue( entrant.getCaseNumber() );
 
 
-            String response = entrant.getRequests().get( 0 ).getResponse().getResponse();
-            /*if ( response.lastIndexOf( " В заявлении" ) > 0 ) {
-                response = response.substring( 0, response.lastIndexOf( " В заявлении" ) );
-                response += " Есть еще одно заявление в другую организацию с такими же данными";
-            }*/
+            String response = entrant.getErrorInfo();  //getRequests().get( 0 ).getResponse().getResponse();
             if ( extended ) {
                 cell = row.createCell( cellN++ );
-                cell.setCellValue( entrant.getSnilsNumber() );
+                //cell.setCellValue( entrant.getSnilsNumber() );
+                cell.setCellValue( entrant.getPhone() );
             }
             StringBuilder result = new StringBuilder();
             result.append( entrant.getLastName() ).append( " " )
@@ -134,9 +132,9 @@ public class PrintReport {
             }
 
             cell = row.createCell( cellN++ );
-            cell.setCellValue( ServiceUtils.getEntrantInfo( entrant, oidDao ) );
+            cell.setCellValue( ServiceUtils.getEntrantInfo( entrant, oidDao, true ) );
             cell = row.createCell( cellN++ );
-            cell.setCellValue( ServiceUtils.getReadableErrorInfo( response, oidDao ) );
+            cell.setCellValue( ServiceUtils.getReadableErrorInfo( response, oidDao, true) );
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType( MediaType.parseMediaType( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ) );
