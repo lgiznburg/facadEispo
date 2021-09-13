@@ -153,7 +153,7 @@ public class PrintReport {
     public ResponseEntity<String> createCsvScores() {
         StringBuilder result = new StringBuilder();
         //header
-        result.append( "Номер дела;ФИО;Тип;Организация;Год;Балл\n" );
+        result.append( "Номер дела;ФИО;Тип;Организация;Год;Специальность;Балл\n" );
 
         List<Entrant> entrants = entrantDao.findEntrantsWithScore();
 
@@ -172,6 +172,7 @@ public class PrintReport {
             result.append( entrant.getExamInfo().getType() ).append( ";" )
                     .append( entrant.getExamInfo().getOrganization() ).append( ";" )
                     .append( entrant.getExamInfo().getYear() ).append( ";" )
+                    .append( entrant.getExamInfo().getSpeciality() ).append( ";" )
                     .append( entrant.getExamInfo().getScore() ).append( "\n" );
         }
         HttpHeaders headers = new HttpHeaders();
@@ -229,7 +230,7 @@ public class PrintReport {
     public ResponseEntity<String> createCsvScoresError() {
         StringBuilder result = new StringBuilder();
         //header
-        result.append( "№ дела;ФИО;Способ получения ВИ;Ошибка\n" );
+        result.append( "№ дела;ФИО;Телефон;Способ получения ВИ;Ошибка\n" );
 
         List<Entrant> entrants = entrantDao.findScoresErrors();
 
@@ -239,6 +240,7 @@ public class PrintReport {
             result.append( entrant.getLastName() ).append( " " )
                     .append( entrant.getFirstName() ).append( " " )
                     .append( entrant.getMiddleName() ).append( ";" );
+            result.append( entrant.getPhone() ).append( ";" );
             result.append( "Тип " ).append( entrant.getExamInfo().getType() ).append( " " )
                     .append( "Год " ).append( entrant.getExamInfo().getYear() ).append( " " )
                     .append( "Организация " ).append( entrant.getExamInfo().getOrganization() ).append( ";" )

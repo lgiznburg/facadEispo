@@ -553,9 +553,9 @@ public class LoadFromTandemService implements ExcelLayout {
                     orderCode = "в";
                 } else if ( name.contains( "СтжСПО" ) ) {
                     orderCode = "г1";
-                } else if ( name.contains( "СтжВО1" ) ) {
+                } else if ( name.contains( "СтжВО<1,5" ) ) {
                     orderCode = "г2";
-                } else if ( name.contains( "СтжВО2++" ) ) {
+                } else if ( name.contains( "СтжВО1,5++" ) ) {
                     orderCode = "г3";
                 } else if ( name.contains( "СтжСел" ) ) {
                     orderCode = "д";
@@ -564,11 +564,11 @@ public class LoadFromTandemService implements ExcelLayout {
                 } else if ( name.contains( "Вол." ) ) {
                     orderCode = "ж";
                 } else if ( name.contains( "Иные" ) ) {
-                    orderCode = "з";
+                    orderCode = "к-8";
                 } else if ( name.contains( "ВолCOVID" ) ) {
-                    orderCode = "21а";
+                    orderCode = "з";
                 } else if ( name.contains( "СтжCOVID" ) ) {
-                    orderCode = "21б";
+                    orderCode = "и";
                 }
                 if ( orderCode.length() > 0 ) {
                     if ( builder.length() > 0  ) {

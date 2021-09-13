@@ -327,7 +327,9 @@ public class CreateApplicationRequest  {
                 if ( entrant.getStatus() == EntrantStatus.ENFORCED && !entrant.isEnrollment() ) {
                     continue;
                 }
-                if ( request.getStatus() == RequestStatus.RETIRED || request.getStatus() == RequestStatus.TERMINATED ) {
+                if ( request.getStatus() == RequestStatus.RETIRED
+                        //|| request.getStatus() == RequestStatus.TERMINATED
+                        || request.getStatus() == RequestStatus.REJECTED ) {
                     continue;
                 }
                 int forceStatus = 0;
@@ -347,12 +349,14 @@ public class CreateApplicationRequest  {
                         .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" );
 
                 if ( forceStatus != 4 ) {
-/*
                     result.append( entrant.getExamInfo().getTotalScore() ).append( ";" )
                             .append( entrant.getExamInfo().getScore() == null ? 0 : entrant.getExamInfo().getScore() ).append( ";" )
-                            .append( entrant.getExamInfo().getAchievements() ).append( ";" );
-*/
-                    fakeExtraAchievement( result, entrant.getExamInfo() );
+                            .append( entrant.getExamInfo().getAchievements()
+                                    .replaceAll( "к-8", "к" )
+                                    .replaceAll( "21б", "и" )
+                                    .replaceAll( "21а", "з" ) )
+                            .append( ";" );
+//                    fakeExtraAchievement( result, entrant.getExamInfo() );
                 } else {
                     result.append( "0;;;" );
                 }
@@ -367,7 +371,7 @@ public class CreateApplicationRequest  {
                             (entrant.getStatus() == EntrantStatus.ENFORCED && request.getStatus() == RequestStatus.REJECTED ) ) {
                         result.append( "2;;;" );
                     }
-                    else if ( request.getStatus() == RequestStatus.REJECTED || forceStatus == 4 ) {
+                    else if ( request.getStatus() != RequestStatus.TERMINATED || forceStatus == 4 ) {
                         result.append( "4;;;" );
                     } else {
                         result.append( "3;;;" );
@@ -423,7 +427,10 @@ public class CreateApplicationRequest  {
                             .append( request.getTargetRequest() ).append( ";" )
                             .append( DATE_FORMAT.format( request.getApplicationDate() ) ).append( ";" );
 
-                    fakeExtraAchievement( result, entrant.getExamInfo() );
+                    result.append( entrant.getExamInfo().getTotalScore() ).append( ";" )
+                            .append( entrant.getExamInfo().getScore() == null ? 0 : entrant.getExamInfo().getScore() ).append( ";" )
+                            .append( entrant.getExamInfo().getAchievements() ).append( ";" );
+//                    fakeExtraAchievement( result, entrant.getExamInfo() );
 
                     result.append( "5;" )
                             /*.append( request.getEnrollmentOrder() )*/.append( ";" )
